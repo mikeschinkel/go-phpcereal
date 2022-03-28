@@ -2,7 +2,7 @@ package phpcereal
 
 import "fmt"
 
-var _ ValueAccessor = (*FloatValue)(nil)
+var _ CerealValue = (*FloatValue)(nil)
 
 type FloatValue struct {
 	Integer  int
@@ -32,7 +32,7 @@ func (v FloatValue) SerializedLen() int {
 	return 3 + numDigits(v.Integer) + numDigits(v.Fraction)
 }
 
-func (v FloatValue) Parse(p *Parser) (_ ValueAccessor) {
+func (v FloatValue) Parse(p *Parser) (_ CerealValue) {
 	var i, f int
 
 	i = p.EatIntUpTo('.')

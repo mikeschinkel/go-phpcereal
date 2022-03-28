@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-var _ ValueAccessor = (*ObjectValue)(nil)
+var _ CerealValue = (*ObjectValue)(nil)
 
 type ObjectValue struct {
 	Value    Object
@@ -63,7 +63,7 @@ func (v ObjectValue) SerializedLen() int {
 	return len(v.Serialized())
 }
 
-func (v ObjectValue) Parse(p *Parser) (_ ValueAccessor) {
+func (v ObjectValue) Parse(p *Parser) (_ CerealValue) {
 	var props []ObjectProperty
 	var length, nameLen int
 	var nameBytes, lenBytes []byte

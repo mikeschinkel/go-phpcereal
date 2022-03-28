@@ -6,6 +6,10 @@ import (
 	"strings"
 )
 
+func MightBeCereal[C []byte | string](c C) bool {
+	return c[1] == ':'
+}
+
 func numDigits(n int) int {
 	return int(math.Floor(math.Log10(float64(n)) + 1))
 }

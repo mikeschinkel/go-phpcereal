@@ -5,7 +5,7 @@ import (
 	"strconv"
 )
 
-var _ ValueAccessor = (*IntValue)(nil)
+var _ CerealValue = (*IntValue)(nil)
 
 type IntValue struct {
 	Value int
@@ -39,7 +39,7 @@ func (v IntValue) SerializedLen() int {
 	return 2 + numDigits(v.Value)
 }
 
-func (v IntValue) Parse(p *Parser) (_ ValueAccessor) {
+func (v IntValue) Parse(p *Parser) (_ CerealValue) {
 	i := p.EatIntUpTo(';')
 	if p.Err != nil {
 		p.Err = fmt.Errorf("expected integer value; %w", p.Err)

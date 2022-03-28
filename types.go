@@ -35,15 +35,6 @@ var validNodeTypes = map[TypeFlag]void{
 }
 
 type PHPType string
-type ValueAccessor interface {
-	GetValue() interface{}
-	GetType() PHPType
-	GetTypeFlag() TypeFlag
-	String() string
-	Serialized() string
-	SerializedLen() int
-	Parse(*Parser) ValueAccessor
-}
 type TypeFlagSetter interface {
 	SetTypeFlag(TypeFlag)
 }

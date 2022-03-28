@@ -232,7 +232,7 @@ func (p *Parser) Pos() int {
 	return len(p.Head) - len(p.Bytes)
 }
 
-func (p *Parser) Parse() (va ValueAccessor, _ error) {
+func (p *Parser) Parse() (cv CerealValue, _ error) {
 
 	tf := p.EatTypeFlag()
 	pf, err := GetParseFunc(tf)
@@ -240,9 +240,9 @@ func (p *Parser) Parse() (va ValueAccessor, _ error) {
 		p.Err = err
 		goto end
 	}
-	va = pf(p)
+	cv = pf(p)
 
-	if pcs, ok := va.(TypeFlagSetter); ok {
+	if pcs, ok := cv.(TypeFlagSetter); ok {
 		pcs.SetTypeFlag(tf)
 	}
 	if p.Err != nil {
@@ -250,65 +250,65 @@ func (p *Parser) Parse() (va ValueAccessor, _ error) {
 		p.Err = fmt.Errorf(msg, p.Pos(), tf, string(p.Head), p.Err)
 	}
 end:
-	return va, p.Err
+	return cv, p.Err
 }
 
-type ParseFunc func(p *Parser) ValueAccessor
+type ParseFunc func(p *Parser) CerealValue
 
 func GetParseFunc(tf TypeFlag) (pf ParseFunc, err error) {
 	switch tf {
 	case ArrayTypeFlag:
-		pf = func(p *Parser) ValueAccessor {
+		pf = func(p *Parser) CerealValue {
 			return ArrayValue{}.Parse(p)
 		}
 
 	case NULLTypeFlag:
-		pf = func(p *Parser) ValueAccessor {
+		pf = func(p *Parser) CerealValue {
 			return NullValue{}.Parse(p)
 		}
 
 	case StringTypeFlag:
-		pf = func(p *Parser) ValueAccessor {
+		pf = func(p *Parser) CerealValue {
 			return StringValue{}.Parse(p)
 		}
 
 	case PHP6StringTypeFlag:
-		pf = func(p *Parser) ValueAccessor {
+		pf = func(p *Parser) CerealValue {
 			return StringValue{}.Parse(p)
 		}
 
 	case BoolTypeFlag:
-		pf = func(p *Parser) ValueAccessor {
+		pf = func(p *Parser) CerealValue {
 			return BoolValue{}.Parse(p)
 		}
 
 	case IntTypeFlag:
-		pf = func(p *Parser) ValueAccessor {
+		pf = func(p *Parser) CerealValue {
 			return IntValue{}.Parse(p)
 		}
 
 	case FloatTypeFlag:
-		pf = func(p *Parser) ValueAccessor {
+		pf = func(p *Parser) CerealValue {
 			return FloatValue{}.Parse(p)
 		}
 
 	case ObjectTypeFlag:
-		pf = func(p *Parser) ValueAccessor {
+		pf = func(p *Parser) CerealValue {
 			return ObjectValue{}.Parse(p)
 		}
 
 	case CustomObjTypeFlag:
-		//pf = func(p *Parser)ValueAccessor{
+		//pf = func(p *Parser)CerealValue{
 		//	return NullValue{}.Parse(p)
 		//}
 
 	case ObjRefTypeFlag:
-		//pf = func(p *Parser)ValueAccessor{
+		//pf = func(p *Parser)CerealValue{
 		//	return NullValue{}.Parse(p)
 		//}
 
 	case VarRefTypeFlag:
-		//pf = func(p *Parser)ValueAccessor{
+		//pf = func(p *Parser)CerealValue{
 		//	return NullValue{}.Parse(p)
 		//}
 

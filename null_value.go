@@ -1,6 +1,6 @@
 package phpcereal
 
-var _ ValueAccessor = (*NullValue)(nil)
+var _ CerealValue = (*NullValue)(nil)
 
 type NullValue struct{}
 
@@ -28,6 +28,6 @@ func (v NullValue) SerializedLen() int {
 	return 2
 }
 
-func (v NullValue) Parse(_ *Parser) (_ ValueAccessor) {
+func (v NullValue) Parse(_ *Parser) (_ CerealValue) {
 	return v
 }

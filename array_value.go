@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-var _ ValueAccessor = (*ArrayValue)(nil)
+var _ CerealValue = (*ArrayValue)(nil)
 
 type ArrayValue struct {
 	Value    Array
@@ -50,7 +50,7 @@ func (v ArrayValue) SerializedLen() int {
 	return len(v.Serialized())
 }
 
-func (v ArrayValue) Parse(p *Parser) (_ ValueAccessor) {
+func (v ArrayValue) Parse(p *Parser) (_ CerealValue) {
 	var elements []ArrayElement
 	var length int
 	var lenBytes []byte

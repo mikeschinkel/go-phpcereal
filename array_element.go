@@ -5,8 +5,8 @@ import (
 )
 
 type ArrayElement struct {
-	Key   ValueAccessor
-	Value ValueAccessor
+	Key   CerealValue
+	Value CerealValue
 }
 
 func (e ArrayElement) String() (s string) {

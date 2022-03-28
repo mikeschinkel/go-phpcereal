@@ -5,7 +5,7 @@ import (
 	"strconv"
 )
 
-var _ ValueAccessor = (*StringValue)(nil)
+var _ CerealValue = (*StringValue)(nil)
 var _ TypeFlagSetter = (*StringValue)(nil)
 
 type StringValue struct {
@@ -67,7 +67,7 @@ func (v StringValue) SerializedLen() int {
 	return 2 + numDigits(length) + 3 + length
 }
 
-func (v StringValue) Parse(p *Parser) (_ ValueAccessor) {
+func (v StringValue) Parse(p *Parser) (_ CerealValue) {
 	var bytes []byte
 	var err error
 	var r rune
@@ -99,6 +99,6 @@ func (v StringValue) Parse(p *Parser) (_ ValueAccessor) {
 	}
 	v.Value = string(bytes)
 end:
-	// This is a pointer so that va.(TypeFlagSetter) will work
+	// This is a pointer so that cv.(TypeFlagSetter) will work
 	return &v
 }

@@ -15,7 +15,7 @@ const (
 type ObjectProperty struct {
 	Name       string
 	Visibility Visibility
-	Value      ValueAccessor
+	Value      CerealValue
 }
 
 // NonPublicName returns just the name and not the other stuff for private and protected vars
@@ -51,7 +51,7 @@ func (prop ObjectProperty) String() (s string) {
 func (prop *ObjectProperty) Parse(p *Parser) {
 	var pf ParseFunc
 	var err error
-	var va ValueAccessor
+	var cv CerealValue
 
 	nameTypeFlag := p.EatTypeFlag()
 	if nameTypeFlag != StringTypeFlag {
@@ -64,12 +64,12 @@ func (prop *ObjectProperty) Parse(p *Parser) {
 		p.Err = err
 		goto end
 	}
-	va = pf(p)
+	cv = pf(p)
 	if p.Err != nil {
 		p.Err = fmt.Errorf("error parsing property name; %w", p.Err)
 		goto end
 	}
-	prop.Name = va.GetValue().(string)
+	prop.Name = cv.GetValue().(string)
 	if prop.Name == "" {
 		p.Err = fmt.Errorf("object property name is empty")
 		goto end
