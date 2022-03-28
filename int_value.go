@@ -47,5 +47,5 @@ func (v IntValue) Parse(p *Parser) (_ CerealValue) {
 	}
 	v.Value = i
 end:
-	return v
+	return &v // This is a pointer to allow return values to call pointer interfaces
 }

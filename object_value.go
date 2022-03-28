@@ -8,11 +8,16 @@ import (
 )
 
 var _ CerealValue = (*ObjectValue)(nil)
+var _ StringReplacer = (*ObjectValue)(nil)
 
 type ObjectValue struct {
 	Value    Object
 	LenBytes []byte // Array Length but as []byte vs. int
 	Bytes    []byte
+}
+
+func (v ObjectValue) ReplaceString(from, to string, times int) {
+	v.Value.ReplaceString(from, to, times)
 }
 
 func (v ObjectValue) GetValue() interface{} {
@@ -129,5 +134,5 @@ end:
 			p.Err = fmt.Errorf("error parsing class %s; %w", v.Value.ClassName, p.Err)
 		}
 	}
-	return v
+	return &v // This must be a pointer for StringReplacer to work
 }

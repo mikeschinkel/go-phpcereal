@@ -46,5 +46,5 @@ func (v BoolValue) Parse(p *Parser) (_ CerealValue) {
 	}
 	v.Value = b[0] == '1'
 end:
-	return v
+	return &v // This is a pointer to allow return values to call pointer interfaces
 }

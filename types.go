@@ -38,3 +38,7 @@ type PHPType string
 type TypeFlagSetter interface {
 	SetTypeFlag(TypeFlag)
 }
+
+type StringReplacer interface {
+	ReplaceString(from, to string, times int)
+}

@@ -3,10 +3,12 @@ package phpcereal
 import (
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 var _ CerealValue = (*StringValue)(nil)
 var _ TypeFlagSetter = (*StringValue)(nil)
+var _ StringReplacer = (*StringValue)(nil)
 
 type StringValue struct {
 	TypeFlag    TypeFlag
@@ -15,6 +17,12 @@ type StringValue struct {
 	Length      int
 	quoteType   rune
 	quotedValue string
+}
+
+func (v *StringValue) ReplaceString(from, to string, times int) {
+	if len(v.Value) >= len(from) {
+		v.Value = strings.Replace(v.Value, from, to, times)
+	}
 }
 
 func (v StringValue) GetValue() interface{} {

@@ -6,11 +6,22 @@ import (
 )
 
 var _ CerealValue = (*ArrayValue)(nil)
+var _ StringReplacer = (*ArrayValue)(nil)
 
 type ArrayValue struct {
 	Value    Array
 	LenBytes []byte // Array Length but as []byte vs. int
 	Bytes    []byte
+}
+
+func (v *ArrayValue) ReplaceString(from, to string, times int) {
+	for _, e := range v.Value {
+		sr, ok := e.Value.(StringReplacer)
+		if !ok {
+			continue
+		}
+		sr.ReplaceString(from, to, times)
+	}
 }
 
 func (v ArrayValue) GetValue() interface{} {
@@ -95,5 +106,5 @@ func (v ArrayValue) Parse(p *Parser) (_ CerealValue) {
 	v.Value = elements
 	v.LenBytes = lenBytes
 end:
-	return v
+	return &v // This must be a pointer for StringReplacer to work
 }

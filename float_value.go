@@ -46,5 +46,5 @@ func (v FloatValue) Parse(p *Parser) (_ CerealValue) {
 	v.Integer = i
 	v.Fraction = f
 end:
-	return v
+	return &v // This is a pointer to allow return values to call pointer interfaces
 }

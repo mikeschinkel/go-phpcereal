@@ -19,9 +19,18 @@ type TestData struct {
 	s string             // Serialized String
 	v string             // Go Value
 	t string             // PHP Type
+	r []string           // Find/Replace strings
 }
 
 var testdata = []TestData{
+	{
+		n: "Array of URLs",
+		f: phpcereal.ArrayTypeFlag,
+		s: `a:3:{i:0;s:40:"https://en.wiktionary.org/wiki/enquoting";i:1;s:41:"https://en.wiktionary.org/wiki/whiff#Verb";i:2;s:42:"https://en.wiktionary.org/wiki/tea#Spanish";}`,
+		v: `[0=>"https://en.wikipedia.org/wiki/enquoting",1=>"https://en.wikipedia.org/wiki/whiff#Verb",2=>"https://en.wikipedia.org/wiki/tea#Spanish"]`,
+		t: "array",
+		r: []string{"wiktionary.org", "wikipedia.org"},
+	},
 	{
 		n: "Object: Foo",
 		f: phpcereal.ObjectTypeFlag,
@@ -61,8 +70,9 @@ var testdata = []TestData{
 		n: "String:hello",
 		f: phpcereal.StringTypeFlag,
 		s: `s:5:"hello";`,
-		v: `"hello"`,
+		v: `"herro"`,
 		t: "string",
+		r: []string{"ll", "rr"},
 	},
 	{
 		n: "NULL",
@@ -102,6 +112,11 @@ func TestParsing(t *testing.T) {
 				assert.Equal(t, test.f, phpcereal.TypeFlag(s[0]))
 			} else {
 				return
+			}
+			if len(test.r) == 2 {
+				if sr, ok := root.(phpcereal.StringReplacer); ok {
+					sr.ReplaceString(test.r[0], test.r[1], -1)
+				}
 			}
 			if assert.Equal(t, phpcereal.PHPType(test.t), root.GetType()) {
 				assert.Equal(t, test.v, root.String())
