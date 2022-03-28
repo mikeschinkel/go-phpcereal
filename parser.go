@@ -203,6 +203,23 @@ end:
 	return bytes
 }
 
+type void struct{}
+
+var validNodeTypes = map[TypeFlag]void{
+	CustomObjTypeFlag:  {},
+	NULLTypeFlag:       {},
+	ObjectTypeFlag:     {},
+	VarRefTypeFlag:     {},
+	PHP6StringTypeFlag: {},
+	ArrayTypeFlag:      {},
+	BoolTypeFlag:       {},
+	FloatTypeFlag:      {},
+	IntTypeFlag:        {},
+	PHP3ObjTypeFlag:    {},
+	ObjRefTypeFlag:     {},
+	StringTypeFlag:     {},
+}
+
 func (p *Parser) EatTypeFlag() TypeFlag {
 	var r rune
 

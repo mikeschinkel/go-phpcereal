@@ -17,23 +17,6 @@ const (
 	StringTypeFlag     TypeFlag = 's'
 )
 
-type void struct{}
-
-var validNodeTypes = map[TypeFlag]void{
-	CustomObjTypeFlag:  {},
-	NULLTypeFlag:       {},
-	ObjectTypeFlag:     {},
-	VarRefTypeFlag:     {},
-	PHP6StringTypeFlag: {},
-	ArrayTypeFlag:      {},
-	BoolTypeFlag:       {},
-	FloatTypeFlag:      {},
-	IntTypeFlag:        {},
-	PHP3ObjTypeFlag:    {},
-	ObjRefTypeFlag:     {},
-	StringTypeFlag:     {},
-}
-
 type PHPType string
 type TypeFlagSetter interface {
 	SetTypeFlag(TypeFlag)
