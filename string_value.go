@@ -51,10 +51,6 @@ func (v StringValue) GetTypeFlag() TypeFlag {
 	return v.TypeFlag
 }
 
-func (v StringValue) GetLength() interface{} {
-	return v.Length
-}
-
 func (v StringValue) String() string {
 	return fmt.Sprintf(`"%s"`, v.getEscapedValue())
 }
