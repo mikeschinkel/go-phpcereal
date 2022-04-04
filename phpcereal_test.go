@@ -24,14 +24,6 @@ type TestData struct {
 
 var testdata = []TestData{
 	{
-		n: "Array of URLs",
-		f: phpcereal.ArrayTypeFlag,
-		s: `a:3:{i:0;s:40:"https://en.wiktionary.org/wiki/enquoting";i:1;s:41:"https://en.wiktionary.org/wiki/whiff#Verb";i:2;s:42:"https://en.wiktionary.org/wiki/tea#Spanish";}`,
-		v: `[0=>"https://en.wikipedia.org/wiki/enquoting",1=>"https://en.wikipedia.org/wiki/whiff#Verb",2=>"https://en.wikipedia.org/wiki/tea#Spanish"]`,
-		t: "array",
-		r: []string{"wiktionary.org", "wikipedia.org"},
-	},
-	{
 		n: "Object: Foo",
 		f: phpcereal.ObjectTypeFlag,
 		s: `O:3:"Foo":3:{s:3:"foo";s:3:"abc";s:8:"\0Foo\0bar";i:13;s:6:"\0*\0baz";b:1;}`,
@@ -46,11 +38,12 @@ var testdata = []TestData{
 		t: "float",
 	},
 	{
-		n: "String:world",
-		f: phpcereal.PHP6StringTypeFlag,
-		s: `S:5:"world";`,
-		v: `"world"`,
-		t: "6string",
+		n: "Array of URLs",
+		f: phpcereal.ArrayTypeFlag,
+		s: `a:3:{i:0;s:40:"https://en.wiktionary.org/wiki/enquoting";i:1;s:41:"https://en.wiktionary.org/wiki/whiff#Verb";i:2;s:42:"https://en.wiktionary.org/wiki/tea#Spanish";}`,
+		v: `[0=>"https://en.wikipedia.org/wiki/enquoting",1=>"https://en.wikipedia.org/wiki/whiff#Verb",2=>"https://en.wikipedia.org/wiki/tea#Spanish"]`,
+		t: "array",
+		r: []string{"wiktionary.org", "wikipedia.org"},
 	},
 	{
 		n: "Array of Integers:[1,2,3]",
@@ -60,19 +53,19 @@ var testdata = []TestData{
 		t: "array",
 	},
 	{
-		n: "Integer:123",
-		f: phpcereal.IntTypeFlag,
-		s: "i:123;",
-		v: "123",
-		t: "int",
-	},
-	{
 		n: "String:hello",
 		f: phpcereal.StringTypeFlag,
 		s: `s:5:"hello";`,
 		v: `"herro"`,
 		t: "string",
 		r: []string{"ll", "rr"},
+	},
+	{
+		n: "String:world",
+		f: phpcereal.PHP6StringTypeFlag,
+		s: `S:5:"world";`,
+		v: `"world"`,
+		t: "6string",
 	},
 	{
 		n: "NULL",
@@ -95,11 +88,21 @@ var testdata = []TestData{
 		v: "false",
 		t: "bool",
 	},
+	{
+		n: "Integer:123",
+		f: phpcereal.IntTypeFlag,
+		s: "i:123;",
+		v: "123",
+		t: "int",
+	},
 }
 
 func TestParsing(t *testing.T) {
 	for _, test := range testdata {
 		t.Run(test.n, func(t *testing.T) {
+			if !phpcereal.IsCereal(test.s) {
+				t.Errorf("failed to validate: %s", test.s)
+			}
 			sp := phpcereal.NewParser(test.s)
 			root, err := sp.Parse()
 			if err != nil {

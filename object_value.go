@@ -44,8 +44,8 @@ func (v ObjectValue) Serialized() string {
 	if v.Bytes == nil {
 		parts := strings.Builder{}
 		parts.WriteByte(byte(ObjectTypeFlag))
-		name := string(v.Value.ClassName)
 		parts.WriteByte(':')
+		name := string(v.Value.ClassName)
 		parts.WriteString(strconv.Itoa(len(name)))
 		parts.WriteString(`:"`)
 		parts.WriteString(name)
