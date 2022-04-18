@@ -19,7 +19,11 @@ func _IsCereal[C Char](c C) (is bool, n int) {
 	var ok bool
 	var p string
 
-	if len(c) <= 2 {
+	switch len(c) {
+	case 0, 1:
+		goto end
+	case 2:
+		is = c[0] == 'N' && c[1] == ';'
 		goto end
 	}
 	if !isColon(c[1]) {
