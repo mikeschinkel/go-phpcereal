@@ -132,7 +132,7 @@ func TestParsing(t *testing.T) {
 			if assert.Equal(t, phpcereal.PHPType(test.t), root.GetType()) {
 				assert.Equal(t, test.v, root.String())
 			} else {
-				return
+				t.Errorf("mismatch in types: %s <> %s", phpcereal.PHPType(test.t), root.GetType())
 			}
 		})
 	}
