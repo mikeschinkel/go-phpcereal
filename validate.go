@@ -30,8 +30,8 @@ func _IsCereal[C Char](c C) (is bool, n int) {
 	if !ok {
 		goto end
 	}
-	if isDash(p[0]) {
-		panic(fmt.Sprintf("PHP TypeFlag %q not IsCereal() yet", b[0]))
+	if p == "" {
+		panic(fmt.Sprintf("PHP TypeFlag %q not implemented for IsCereal() yet", b[0]))
 	}
 	if isNULL(b) {
 		is = true
@@ -58,10 +58,10 @@ var patterns = map[TypeFlag]string{
 	FloatTypeFlag:      "D.D;",
 	IntTypeFlag:        "D;",
 	StringTypeFlag:     `L:$;`,
-	PHP3ObjTypeFlag:    "-",
-	ObjRefTypeFlag:     "-",
-	VarRefTypeFlag:     "-",
-	CustomObjTypeFlag:  "-",
+	PHP3ObjTypeFlag:    "",
+	ObjRefTypeFlag:     "",
+	VarRefTypeFlag:     "",
+	CustomObjTypeFlag:  "",
 }
 
 func isCereal(buf, pat []byte) (is bool, bytes int) {
