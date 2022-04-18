@@ -9,6 +9,7 @@ import (
 
 var _ CerealValue = (*ObjectValue)(nil)
 var _ StringReplacer = (*ObjectValue)(nil)
+var _ SQLSerializedGetter = (*ObjectValue)(nil)
 
 type ObjectValue struct {
 	Value    Object
@@ -41,6 +42,14 @@ func (v ObjectValue) GetValueType() TypeFlag {
 }
 
 func (v ObjectValue) Serialized() string {
+	return v.serialized(false)
+}
+
+func (v *ObjectValue) SQLSerialized() string {
+	return v.serialized(true)
+}
+
+func (v ObjectValue) serialized(sql bool) string {
 	if v.Bytes == nil {
 		parts := strings.Builder{}
 		parts.WriteByte(byte(ObjectTypeFlag))
@@ -53,10 +62,19 @@ func (v ObjectValue) Serialized() string {
 		builderWriteInt(&parts, v.Value.Size())
 		parts.WriteString(":{")
 		for _, prop := range v.Value.Properties {
-			propName := escape(prop.Name)
 			parts.WriteString(fmt.Sprintf(`%c:%d:"%s";`,
-				byte(StringTypeFlag), stringLengthIgnoreNulls(propName), propName))
-			parts.WriteString(prop.Value.Serialized())
+				byte(StringTypeFlag),
+				stringLengthIgnoreNulls(escape(prop.Name)),
+				prop.maybeGetSQLName(sql)))
+			if sql {
+				// If sql==true, e.g. generate serialized for SQL
+				// then the element *may* need to be serialized.
+				parts.WriteString(MaybeGetSQLSerialized(prop.Value))
+			} else {
+				// If sql==false, e.g. do not
+				// generate serialized for SQL.
+				parts.WriteString(prop.Value.Serialized())
+			}
 		}
 		parts.WriteByte('}')
 		v.Bytes = []byte(parts.String())

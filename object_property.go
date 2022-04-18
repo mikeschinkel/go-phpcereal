@@ -35,6 +35,16 @@ func (prop ObjectProperty) NonPublicName() (s string) {
 	return s
 }
 
+// maybeGetSQLName returns the escaped serialized string for on
+// object property name if sql==true, otherwise it just returns
+// the escaped name of the object property.
+func (prop ObjectProperty) maybeGetSQLName(sql bool) (s string) {
+	if sql {
+		return fmt.Sprintf(`\"%s"\`, escape(prop.Name))
+	}
+	return escape(prop.Name)
+}
+
 func (prop ObjectProperty) String() (s string) {
 	var modifier string
 	switch prop.Visibility {

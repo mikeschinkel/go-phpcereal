@@ -63,7 +63,22 @@ func (v *StringValue) getEscapedValue() string {
 }
 
 func (v StringValue) Serialized() string {
-	return fmt.Sprintf(`%c:%d:"%s";`, byte(v.GetTypeFlag()), len(v.Value), v.getEscapedValue())
+	return v.serialized(false)
+}
+
+func (v StringValue) SQLSerialized() string {
+	return v.serialized(true)
+}
+
+func (v StringValue) serialized(sql bool) string {
+	pattern := `%c:%d:"%s";`
+	if sql {
+		pattern = `%c:%d:\"%s\";`
+	}
+	return fmt.Sprintf(pattern,
+		byte(v.GetTypeFlag()),
+		len(v.Value),
+		v.getEscapedValue())
 }
 
 func (v StringValue) SerializedLen() int {

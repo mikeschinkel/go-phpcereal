@@ -1,6 +1,7 @@
 package phpcereal_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/mikeschinkel/go-phpcereal"
@@ -117,7 +118,11 @@ func TestParsing(t *testing.T) {
 				t.Error(err.Error())
 				return
 			}
-			s := root.Serialized()
+			if test.e {
+				s = phpcereal.MaybeGetSQLSerialized(root)
+			} else {
+				s = root.Serialized()
+			}
 			assert.Equal(t, test.s, s)
 			if assert.NotEmpty(t, s) {
 				assert.Equal(t, test.f, phpcereal.TypeFlag(s[0]))

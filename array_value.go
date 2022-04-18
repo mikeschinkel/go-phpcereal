@@ -7,6 +7,7 @@ import (
 
 var _ CerealValue = (*ArrayValue)(nil)
 var _ StringReplacer = (*ArrayValue)(nil)
+var _ SQLSerializedGetter = (*ArrayValue)(nil)
 
 type ArrayValue struct {
 	Value    Array
@@ -40,7 +41,15 @@ func (v ArrayValue) String() string {
 	return v.Value.String()
 }
 
+func (v *ArrayValue) SQLSerialized() string {
+	return v.serialized(true)
+}
+
 func (v ArrayValue) Serialized() (s string) {
+	return v.serialized(false)
+}
+
+func (v ArrayValue) serialized(sql bool) (s string) {
 	if v.Bytes == nil {
 		parts := strings.Builder{}
 		parts.WriteByte(byte(ArrayTypeFlag))
@@ -48,8 +57,17 @@ func (v ArrayValue) Serialized() (s string) {
 		builderWriteInt(&parts, v.Value.Length())
 		parts.WriteString(":{")
 		for _, element := range v.Value {
-			parts.WriteString(element.Key.Serialized())
-			parts.WriteString(element.Value.Serialized())
+			if sql {
+				// If sql==true, e.g. generate serialized for SQL
+				// then the element *may* need to be serialized.
+				parts.WriteString(MaybeGetSQLSerialized(element.Key))
+				parts.WriteString(MaybeGetSQLSerialized(element.Value))
+			} else {
+				// If sql==false, e.g. do not
+				// generate serialized for SQL.
+				parts.WriteString(element.Key.Serialized())
+				parts.WriteString(element.Value.Serialized())
+			}
 		}
 		parts.WriteByte('}')
 		v.Bytes = []byte(parts.String())
