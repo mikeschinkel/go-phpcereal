@@ -5,16 +5,12 @@ import (
 	"strconv"
 )
 
-type Char interface {
-	[]byte | string
-}
-
-func IsCereal[C Char](c C) (is bool) {
-	is, _ = _IsCereal(c)
+func IsCereal[C Chars](chars C) (is bool) {
+	is, _ = _IsCereal(chars)
 	return is
 }
 
-func _IsCereal[C Char](c C) (is bool, n int) {
+func _IsCereal[C Chars](c C) (is bool, n int) {
 	var b []byte
 	var ok bool
 	var p string

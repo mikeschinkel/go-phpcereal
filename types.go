@@ -25,3 +25,7 @@ type TypeFlagSetter interface {
 type StringReplacer interface {
 	ReplaceString(from, to string, times int)
 }
+
+type Chars interface {
+	string | []byte
+}

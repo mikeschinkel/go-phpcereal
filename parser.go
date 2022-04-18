@@ -16,10 +16,6 @@ type Parser struct {
 	//	Pos      int
 }
 
-type Chars interface {
-	string | []byte
-}
-
 func NewParser[C Chars](s C) *Parser {
 	b := []byte(s)
 	return &Parser{
