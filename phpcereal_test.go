@@ -1,7 +1,6 @@
 package phpcereal_test
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/mikeschinkel/go-phpcereal"
@@ -32,6 +31,61 @@ func (test TestData) IsCereal() bool {
 }
 
 var testdata = []TestData{
+	{
+		n: "Array: Complex Escaped",
+		f: phpcereal.ArrayTypeFlag,
+		t: "array",
+		e: true,
+		s: `a:24:{` +
+			`i:0;s:34:\"advanced-custom-fields-pro/acf.php\";` +
+			`i:1;s:55:\"advanced-post-types-order/advanced-post-types-order.php\";` +
+			`i:2;s:39:\"aryo-activity-log/aryo-activity-log.php\";` +
+			`i:3;s:28:\"category-posts/cat-posts.php\";` +
+			`i:4;s:33:\"classic-editor/classic-editor.php\";` +
+			`i:5;s:49:\"constant-contact-forms/constant-contact-forms.php\";` +
+			`i:6;s:35:\"disable-xml-rpc/disable-xml-rpc.php\";` +
+			`i:7;s:61:\"divi_extended_column_layouts/divi_extended_column_layouts.php\";` +
+			`i:8;s:32:\"duplicate-page/duplicatepage.php\";` +
+			`i:9;s:49:\"elegant-themes-updater/elegant-themes-updater.php\";` +
+			`i:10;s:45:\"enable-media-replace/enable-media-replace.php\";` +
+			`i:11;s:53:\"enhanced-media-library-pro/enhanced-media-library.php\";` +
+			`i:12;s:21:\"include-me/plugin.php\";` +
+			`i:13;s:30:\"interactive-world-maps/map.php\";` +
+			`i:14;s:63:\"limit-login-attempts-reloaded/limit-login-attempts-reloaded.php\";` +
+			`i:15;s:25:\"menu-image/menu-image.php\";i:17;s:19:\"monarch/monarch.php\";` +
+			`i:16;s:33:\"posts-to-posts/posts-to-posts.php\";i:19;s:27:\"redirection/redirection.php\";` +
+			`i:28;s:47:\"regenerate-thumbnails/regenerate-thumbnails.php\";` +
+			`i:20;s:23:\"revslider/revslider.php\";` +
+			`i:21;s:45:\"taxonomy-terms-order/taxonomy-terms-order.php\";` +
+			`i:22;s:24:\"wordpress-seo/wp-seo.php\";` +
+			`i:23;s:29:\"wp-shopify-pro/wp-shopify.php\";` +
+			`}`,
+		v: `[` +
+			`0=>"advanced-custom-fields-pro/acf.php",` +
+			`1=>"advanced-post-types-order/advanced-post-types-order.php",` +
+			`2=>"aryo-activity-log/aryo-activity-log.php",` +
+			`3=>"category-posts/cat-posts.php",` +
+			`4=>"classic-editor/classic-editor.php",` +
+			`5=>"constant-contact-forms/constant-contact-forms.php",` +
+			`6=>"disable-xml-rpc/disable-xml-rpc.php",` +
+			`7=>"divi_extended_column_layouts/divi_extended_column_layouts.php",` +
+			`8=>"duplicate-page/duplicatepage.php",` +
+			`9=>"elegant-themes-updater/elegant-themes-updater.php",` +
+			`10=>"enable-media-replace/enable-media-replace.php",` +
+			`11=>"enhanced-media-library-pro/enhanced-media-library.php",` +
+			`12=>"include-me/plugin.php",` +
+			`13=>"interactive-world-maps/map.php",` +
+			`14=>"limit-login-attempts-reloaded/limit-login-attempts-reloaded.php",` +
+			`15=>"menu-image/menu-image.php",` +
+			`17=>"monarch/monarch.php",` +
+			`16=>"posts-to-posts/posts-to-posts.php",` +
+			`19=>"redirection/redirection.php",` +
+			`28=>"regenerate-thumbnails/regenerate-thumbnails.php",` +
+			`20=>"revslider/revslider.php",` +
+			`21=>"taxonomy-terms-order/taxonomy-terms-order.php",` +
+			`22=>"wordpress-seo/wp-seo.php",23=>"wp-shopify-pro/wp-shopify.php",` +
+			`]`,
+	},
 	{
 		n: "Object: Foo",
 		f: phpcereal.ObjectTypeFlag,
@@ -107,6 +161,8 @@ var testdata = []TestData{
 }
 
 func TestParsing(t *testing.T) {
+	var s string
+
 	for _, test := range testdata {
 		t.Run(test.n, func(t *testing.T) {
 			if !test.IsCereal() {
