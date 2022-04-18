@@ -49,7 +49,7 @@ var testdata = []TestData{
 		n: "Array of URLs",
 		f: phpcereal.ArrayTypeFlag,
 		s: `a:3:{i:0;s:40:"https://en.wiktionary.org/wiki/enquoting";i:1;s:41:"https://en.wiktionary.org/wiki/whiff#Verb";i:2;s:42:"https://en.wiktionary.org/wiki/tea#Spanish";}`,
-		v: `[0=>"https://en.wikipedia.org/wiki/enquoting",1=>"https://en.wikipedia.org/wiki/whiff#Verb",2=>"https://en.wikipedia.org/wiki/tea#Spanish"]`,
+		v: `[0=>"https://en.wikipedia.org/wiki/enquoting",1=>"https://en.wikipedia.org/wiki/whiff#Verb",2=>"https://en.wikipedia.org/wiki/tea#Spanish",]`,
 		t: "array",
 		r: []string{"wiktionary.org", "wikipedia.org"},
 	},
@@ -57,7 +57,7 @@ var testdata = []TestData{
 		n: "Array of Integers:[1,2,3]",
 		f: phpcereal.ArrayTypeFlag,
 		s: "a:3:{i:0;i:1;i:1;i:2;i:2;i:3;}",
-		v: "[0=>1,1=>2,2=>3]",
+		v: "[0=>1,1=>2,2=>3,]",
 		t: "array",
 	},
 	{
