@@ -6,11 +6,16 @@ import (
 )
 
 func IsCereal[C Chars](chars C) (is bool) {
-	is, _ = _IsCereal(chars)
+	is, _ = _IsCereal(chars, false)
 	return is
 }
 
-func _IsCereal[C Chars](c C) (is bool, n int) {
+func IsEscapedCereal[C Chars](chars C) (is bool) {
+	is, _ = _IsCereal(chars, true)
+	return is
+}
+
+func _IsCereal[C Chars](c C, escaped bool) (is bool, n int) {
 	var b []byte
 	var ok bool
 	var p string
@@ -37,7 +42,7 @@ func _IsCereal[C Chars](c C) (is bool, n int) {
 		is = true
 		goto end
 	}
-	is, n = isCereal(b[2:], []byte(p))
+	is, n = isCereal(b[2:], []byte(p), escaped)
 end:
 	return is, n
 }
@@ -64,7 +69,7 @@ var patterns = map[TypeFlag]string{
 	CustomObjTypeFlag:  "",
 }
 
-func isCereal(buf, pat []byte) (is bool, bytes int) {
+func isCereal(buf, pat []byte, escaped bool) (is bool, bytes int) {
 	var index, length, pos, start, n int
 	var c byte
 	start = pos
@@ -76,10 +81,12 @@ func isCereal(buf, pat []byte) (is bool, bytes int) {
 		switch c {
 
 		case '$': // Double-quoted string
-			hasBackslash := false
-			if isBackSlash(buf[pos]) {
-				hasBackslash = true
-				pos++
+			if escaped {
+				if !isBackSlash(buf[pos]) {
+					goto end
+				} else {
+					pos++
+				}
 			}
 			if !isDoubleQuote(buf[pos]) {
 				goto end
@@ -101,7 +108,7 @@ func isCereal(buf, pat []byte) (is bool, bytes int) {
 					break
 				}
 			}
-			if hasBackslash {
+			if escaped {
 				if !isBackSlash(buf[pos]) {
 					goto end
 				} else {
@@ -121,17 +128,17 @@ func isCereal(buf, pat []byte) (is bool, bytes int) {
 			pos++
 
 		case 'V': // CerealValue
-			is, n = _IsCereal(buf)
+			is, n = _IsCereal(buf, escaped)
 			pos += n + 1
 
 		case '#': // Repeat
 			for i := 0; i < length; i++ {
-				is, n = _IsCereal(buf[pos:])
+				is, n = _IsCereal(buf[pos:], escaped)
 				pos += n + 2 // 2 = 1) TypeFlag, 2)Semicolon after index
 				if !is {
 					goto end
 				}
-				is, n = _IsCereal(buf[pos:])
+				is, n = _IsCereal(buf[pos:], escaped)
 				pos += n + 2 // 2 = 1) TypeFlag, 2)Semicolon after index
 				if !is {
 					goto end
