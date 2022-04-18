@@ -15,8 +15,18 @@ func IsCereal[C Char](c C) (is bool) {
 }
 
 func _IsCereal[C Char](c C) (is bool, n int) {
-	b := []byte(c)
-	p, ok := patterns[TypeFlag(b[0])]
+	var b []byte
+	var ok bool
+	var p string
+
+	if len(c) <= 2 {
+		goto end
+	}
+	if !isColon(c[1]) {
+		goto end
+	}
+	b = []byte(c)
+	p, ok = patterns[TypeFlag(b[0])]
 	if !ok {
 		goto end
 	}
@@ -25,12 +35,6 @@ func _IsCereal[C Char](c C) (is bool, n int) {
 	}
 	if isNULL(b) {
 		is = true
-		goto end
-	}
-	if len(b) <= 3 {
-		goto end
-	}
-	if !isColon(b[1]) {
 		goto end
 	}
 	is, n = isCereal(b[2:], []byte(p))
@@ -72,6 +76,11 @@ func isCereal(buf, pat []byte) (is bool, bytes int) {
 		switch c {
 
 		case '$': // Double-quoted string
+			hasBackslash := false
+			if isBackSlash(buf[pos]) {
+				hasBackslash = true
+				pos++
+			}
 			if !isDoubleQuote(buf[pos]) {
 				goto end
 			}
@@ -90,6 +99,13 @@ func isCereal(buf, pat []byte) (is bool, bytes int) {
 				pos++
 				if allConsumed(buf, pos) {
 					break
+				}
+			}
+			if hasBackslash {
+				if !isBackSlash(buf[pos]) {
+					goto end
+				} else {
+					pos++
 				}
 			}
 			if isDoubleQuote(buf[pos]) {
