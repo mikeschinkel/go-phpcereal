@@ -16,10 +16,18 @@ import (
 type TestData struct {
 	n string             // Test Name
 	f phpcereal.TypeFlag // Type Flag
+	e bool               // Escaped
 	s string             // Serialized String
 	v string             // Go Value
 	t string             // PHP Type
 	r []string           // Find/Replace strings
+}
+
+func (test TestData) IsCereal() bool {
+	if test.e {
+		return phpcereal.IsEscapedCereal(test.s)
+	}
+	return phpcereal.IsCereal(test.s)
 }
 
 var testdata = []TestData{
@@ -100,7 +108,7 @@ var testdata = []TestData{
 func TestParsing(t *testing.T) {
 	for _, test := range testdata {
 		t.Run(test.n, func(t *testing.T) {
-			if !phpcereal.IsCereal(test.s) {
+			if !test.IsCereal() {
 				t.Errorf("failed to validate: %s", test.s)
 			}
 			sp := phpcereal.NewParser(test.s)
