@@ -19,8 +19,8 @@ func escape(s string) string {
 }
 
 func builderWriteInt(b *strings.Builder, i int) {
-	if i >= 10 {
-		b.WriteByte(byte(i + '0' - 1))
+	if i < 10 {
+		b.WriteByte(byte(i + '0'))
 	} else {
 		b.WriteString(strconv.Itoa(i))
 	}
