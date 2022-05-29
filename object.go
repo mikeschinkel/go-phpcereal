@@ -4,9 +4,11 @@ import "strings"
 
 var _ StringReplacer = (*Object)(nil)
 
+type ObjectProperties []ObjectProperty
+
 type Object struct {
 	ClassName  PHPType
-	Properties []ObjectProperty
+	Properties ObjectProperties
 }
 
 func (o *Object) ReplaceString(from, to string, times int) {

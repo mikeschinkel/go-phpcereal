@@ -55,18 +55,18 @@ end:
 //	$: Double-quoted string
 
 var patterns = map[TypeFlag]string{
-	NULLTypeFlag:       `N;`,
-	ObjectTypeFlag:     `L:$:L:{#}`,
-	PHP6StringTypeFlag: `L:$;`,
-	ArrayTypeFlag:      "L:{#}",
-	BoolTypeFlag:       "B;",
-	FloatTypeFlag:      "D.D;",
-	IntTypeFlag:        "D;",
-	StringTypeFlag:     `L:$;`,
-	PHP3ObjTypeFlag:    "",
-	ObjRefTypeFlag:     "",
-	VarRefTypeFlag:     "",
-	CustomObjTypeFlag:  "",
+	NULLTypeFlag:         `N;`,
+	ObjectTypeFlag:       `L:$:L:{#}`,
+	CustomObjectTypeFlag: "L:$:L:{L:{#}}",
+	PHP6StringTypeFlag:   `L:$;`,
+	ArrayTypeFlag:        "L:{#}",
+	BoolTypeFlag:         "B;",
+	FloatTypeFlag:        "D.D;",
+	IntTypeFlag:          "D;",
+	StringTypeFlag:       `L:$;`,
+	PHP3ObjTypeFlag:      "",
+	ObjRefTypeFlag:       "",
+	VarRefTypeFlag:       "",
 }
 
 func isCereal(buf, pat []byte, escaped bool) (is bool, bytes int) {
@@ -215,20 +215,21 @@ func isColon(b byte) bool {
 func isNULL(b []byte) bool {
 	return len(b) >= 2 && b[0] == 'N' && b[1] == ';'
 }
-func isDash(b byte) bool {
-	return b == '-'
-}
-func isHash(b byte) bool {
-	return b == '#'
-}
+
+//func isDash(b byte) bool {
+//	return b == '-'
+//}
+//func isHash(b byte) bool {
+//	return b == '#'
+//}
+//func isOpenBrace(b byte) bool {
+//	return b == '{'
+//}
 func isBackSlash(b byte) bool {
 	return b == '\\'
 }
 func isDoubleQuote(b byte) bool {
 	return b == '"'
-}
-func isOpenBrace(b byte) bool {
-	return b == '{'
 }
 func allConsumed(b []byte, i int) bool {
 	return i == len(b)
@@ -237,7 +238,7 @@ func allConsumed(b []byte, i int) bool {
 //type validateFunc func(b []byte) bool
 //
 //var validateFuncs = map[TypeFlag]validateFunc{
-//	CustomObjTypeFlag:  ValidateCustomObj,
+//	CustomObjectTypeFlag:  ValidateCustomObj,
 //	NULLTypeFlag:       ValidateNULL,
 //	ObjectTypeFlag:     ValidateObject,
 //	VarRefTypeFlag:     ValidateVarRef,

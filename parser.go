@@ -147,29 +147,37 @@ func (p *Parser) EatQuotedString(length int, quote rune, quotesEscaped ...bool) 
 		case p.LastRune == quote:
 			switch {
 			case count == quotePos:
-				if qe && !inEsc {
-					p.Err = fmt.Errorf("quote found at %d when backslash was expected: %s",
-						quotePos, leftTrunc(start, count))
-					goto end
+				if quote != CloseBrace {
+					if qe && !inEsc {
+						p.Err = fmt.Errorf("quote found at %d when backslash was expected: %s",
+							quotePos, leftTrunc(start, count))
+						goto end
+					}
+					count--
 				}
-				count--
 				goto end
 			case p.PeekNext() == quote:
-				quotePos++
+				if CloseBrace != quote {
+					// CloseBrace occurs in Custom Object
+					quotePos++
+				}
 				continue
 			}
 			//			inQuote = false
 			inEsc = false
+
 		case inEsc:
 			switch p.LastRune {
-			case BackSlash:
-				inEsc = true
-				continue
-			case 'n', 'r', 't':
-				count++
+			case BackSlash, 'a', 'e', 'f', 'n', 'r', 'R', 't':
+				print("")
+			case 'c', 'p', 'P', 'x', '0':
+				_, _ = p.EatEscapeSequence(p.LastRune)
+				// Need to set count
 			}
 			inEsc = false
+
 		case p.LastRune == BackSlash:
+			inEsc = true
 			if count == quotePos {
 				if !qe {
 					p.Err = fmt.Errorf("backslash found at %d when quote was expected: %s",
@@ -184,6 +192,7 @@ func (p *Parser) EatQuotedString(length int, quote rune, quotesEscaped ...bool) 
 		case count >= quotePos:
 			count--
 			goto end
+
 		default:
 			if p.EOF() {
 				p.Err = fmt.Errorf("no closing quote for string: %s", leftTrunc(start, count))
@@ -199,21 +208,56 @@ end:
 	return bytes
 }
 
+func (p *Parser) EatControl() (b []byte, count int) {
+	return nil, 0
+}
+func (p *Parser) EatWithUnicodeProperty() (b []byte, count int) {
+	return nil, 0
+}
+func (p *Parser) EatWithoutUnicodeProperty() (b []byte, count int) {
+	return nil, 0
+}
+func (p *Parser) EatHex() (b []byte, count int) {
+	return nil, 0
+}
+func (p *Parser) EatOctal() (b []byte, count int) {
+	return nil, 0
+}
+
+// EatEscapeSequence eats PHP escape sequences and returns true if it ate one.
+// See https://www.php.net/manual/en/regexp.reference.escape.php
+// And https://www.php.net/manual/en/regexp.reference.unicode.php
+func (p *Parser) EatEscapeSequence(r rune) (b []byte, count int) {
+	switch r {
+	case 'c':
+		b, count = p.EatControl()
+	case 'p':
+		b, count = p.EatWithUnicodeProperty()
+	case 'P':
+		b, count = p.EatWithoutUnicodeProperty()
+	case 'x':
+		b, count = p.EatHex()
+	case '0':
+		b, count = p.EatOctal()
+	}
+	return b, count
+}
+
 type void struct{}
 
 var validNodeTypes = map[TypeFlag]void{
-	CustomObjTypeFlag:  {},
-	NULLTypeFlag:       {},
-	ObjectTypeFlag:     {},
-	VarRefTypeFlag:     {},
-	PHP6StringTypeFlag: {},
-	ArrayTypeFlag:      {},
-	BoolTypeFlag:       {},
-	FloatTypeFlag:      {},
-	IntTypeFlag:        {},
-	PHP3ObjTypeFlag:    {},
-	ObjRefTypeFlag:     {},
-	StringTypeFlag:     {},
+	CustomObjectTypeFlag: {},
+	NULLTypeFlag:         {},
+	ObjectTypeFlag:       {},
+	VarRefTypeFlag:       {},
+	PHP6StringTypeFlag:   {},
+	ArrayTypeFlag:        {},
+	BoolTypeFlag:         {},
+	FloatTypeFlag:        {},
+	IntTypeFlag:          {},
+	PHP3ObjTypeFlag:      {},
+	ObjRefTypeFlag:       {},
+	StringTypeFlag:       {},
 }
 
 func (p *Parser) EatTypeFlag() TypeFlag {
@@ -310,10 +354,10 @@ func GetParseFunc(tf TypeFlag) (pf ParseFunc, err error) {
 			return ObjectValue{}.Parse(p)
 		}
 
-	case CustomObjTypeFlag:
-		//pf = func(p *Parser)CerealValue{
-		//	return NullValue{}.Parse(p)
-		//}
+	case CustomObjectTypeFlag:
+		pf = func(p *Parser) CerealValue {
+			return CustomObjectValue{}.Parse(p)
+		}
 
 	case ObjRefTypeFlag:
 		//pf = func(p *Parser)CerealValue{

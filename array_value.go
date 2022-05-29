@@ -9,10 +9,16 @@ var _ CerealValue = (*ArrayValue)(nil)
 var _ StringReplacer = (*ArrayValue)(nil)
 var _ SQLSerializedGetter = (*ArrayValue)(nil)
 
+type boolMappedBytes map[bool][]byte
 type ArrayValue struct {
 	Value    Array
 	LenBytes []byte // Array Length but as []byte vs. int
-	Bytes    []byte
+	bytes    boolMappedBytes
+	escaped  bool
+}
+
+func (v *ArrayValue) Length() int {
+	return v.Value.Length()
 }
 
 func (v *ArrayValue) ReplaceString(from, to string, times int) {
@@ -23,6 +29,13 @@ func (v *ArrayValue) ReplaceString(from, to string, times int) {
 		}
 		sr.ReplaceString(from, to, times)
 	}
+}
+
+func (v ArrayValue) GetBytes() []byte {
+	if v.bytes == nil {
+		return nil
+	}
+	return v.bytes[v.escaped]
 }
 
 func (v ArrayValue) GetValue() interface{} {
@@ -45,34 +58,44 @@ func (v *ArrayValue) SQLSerialized() string {
 	return v.serialized(true)
 }
 
-func (v ArrayValue) Serialized() (s string) {
+func (v *ArrayValue) Serialized() (s string) {
 	return v.serialized(false)
 }
 
-func (v ArrayValue) serialized(sql bool) (s string) {
-	if v.Bytes == nil {
-		parts := strings.Builder{}
-		parts.WriteByte(byte(ArrayTypeFlag))
-		parts.WriteByte(':')
-		builderWriteInt(&parts, v.Value.Length())
-		parts.WriteString(":{")
-		for _, element := range v.Value {
-			if sql {
-				// If sql==true, e.g. generate serialized for SQL
-				// then the element *may* need to be serialized.
-				parts.WriteString(MaybeGetSQLSerialized(element.Key))
-				parts.WriteString(MaybeGetSQLSerialized(element.Value))
-			} else {
-				// If sql==false, e.g. do not
-				// generate serialized for SQL.
-				parts.WriteString(element.Key.Serialized())
-				parts.WriteString(element.Value.Serialized())
-			}
+func (v *ArrayValue) serialized(escaped bool) (s string) {
+	var builder strings.Builder
+	if v.bytes == nil {
+		v.bytes = boolMappedBytes{
+			true:  nil,
+			false: nil,
 		}
-		parts.WriteByte('}')
-		v.Bytes = []byte(parts.String())
+		v.escaped = escaped
 	}
-	return string(v.Bytes)
+	if v.bytes[escaped] != nil {
+		goto end
+	}
+	builder = strings.Builder{}
+	builder.WriteByte(byte(ArrayTypeFlag))
+	builder.WriteByte(':')
+	builderWriteInt(&builder, v.Value.Length())
+	builder.WriteString(":{")
+	for _, element := range v.Value {
+		if escaped {
+			// If escaped==true, e.g. generate serialized for SQL
+			// then the element *may* need to be serialized.
+			builder.WriteString(MaybeGetSQLSerialized(element.Key))
+			builder.WriteString(MaybeGetSQLSerialized(element.Value))
+		} else {
+			// If escaped==false, e.g. do not
+			// generate serialized for SQL.
+			builder.WriteString(element.Key.Serialized())
+			builder.WriteString(element.Value.Serialized())
+		}
+	}
+	builder.WriteByte('}')
+	v.bytes[escaped] = []byte(builder.String())
+end:
+	return string(v.bytes[escaped])
 }
 
 func (v ArrayValue) SerializedLen() int {

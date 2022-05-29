@@ -1,7 +1,9 @@
 package phpcereal
 
 const (
-	SingleQuote = '\''
-	DoubleQuote = '"'
-	BackSlash   = '\\'
+	SingleQuote rune = '\''
+	DoubleQuote rune = '"'
+	BackSlash   rune = '\\'
+	OpenBrace   rune = '{'
+	CloseBrace  rune = '}'
 )

@@ -86,10 +86,11 @@ func (v ObjectValue) SerializedLen() int {
 	return len(v.Serialized())
 }
 
-func (v ObjectValue) Parse(p *Parser) (_ CerealValue) {
-	var props []ObjectProperty
-	var length, nameLen int
-	var nameBytes, lenBytes []byte
+func (v *ObjectValue) ParseHeader(p *Parser) (length int, lenBytes []byte) {
+	var r rune
+	var quotesEscaped bool
+	var nameLen int
+	var nameBytes []byte
 
 	nameLen = p.EatIntUpTo(':')
 	if p.Err != nil {
@@ -97,11 +98,17 @@ func (v ObjectValue) Parse(p *Parser) (_ CerealValue) {
 		goto end
 	}
 
+	r = p.PeekNext()
+	if r == BackSlash {
+		r = p.EatNext()
+		quotesEscaped = true
+	}
+
 	if !p.Match('"', "enquoting object class name") {
 		goto end
 	}
 
-	nameBytes = p.EatQuotedString(nameLen, '"')
+	nameBytes = p.EatQuotedString(nameLen, '"', quotesEscaped)
 	if nameBytes == nil {
 		p.Err = errors.New("error; empty object class name")
 		goto end
@@ -124,8 +131,19 @@ func (v ObjectValue) Parse(p *Parser) (_ CerealValue) {
 		p.Err = fmt.Errorf("invalid object size; %w", p.Err)
 		goto end
 	}
+end:
+	return length, lenBytes
+}
 
-	props = make([]ObjectProperty, length)
+func (v ObjectValue) Parse(p *Parser) (_ CerealValue) {
+	var props ObjectProperties
+
+	length, lenBytes := v.ParseHeader(p)
+	if p.Err != nil {
+		goto end
+	}
+
+	props = make(ObjectProperties, length)
 	if !p.Match('{') {
 		goto end
 	} else {

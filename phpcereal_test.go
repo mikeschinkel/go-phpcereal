@@ -8,7 +8,7 @@ import (
 )
 
 //const (
-//	sAll      = `a:12:{s:4:"Null";N;s:6:"String";s:5:"hello";s:7:"Php6Str";s:5:"world";s:3:"Int";i:123;s:4:"Bool";b:1;s:5:"False";b:0;s:5:"Float";d:12.34;s:6:"Object";O:3:"Foo":2:{s:3:"foo";s:3:"abc";s:8:"\0Foo\0bar";i:13;}s:5:"Array";a:3:{i:0;i:1;i:1;i:2;i:2;i:3;}s:9:"ObjectRef";R:9;s:8:"CSObject";O:3:"Bar":1:{s:3:"foo";s:54:"O:3:"Foo":2:{s:3:"foo";s:3:"abc";s:8:"\0Foo\0bar";i:13;}";}s:6:"VarRef";R:3;}`
+//	sAll      = `a:12:{s:4:"Null";N;s:6:"String";s:5:"hello";s:7:"Php6Str";s:5:"world";s:3:"Int";i:123;s:4:"Bool";b:1;s:5:"False";b:0;s:5:"Float";d:12.34;s:6:"Object";O:3:"Foo":2:{s:3:"foo";s:3:"abc";s:8:"\0Foo\0bar";i:13;}s:5:"ArrayValue";a:3:{i:0;i:1;i:1;i:2;i:2;i:3;}s:9:"ObjectRef";R:9;s:8:"CSObject";O:3:"Bar":1:{s:3:"foo";s:54:"O:3:"Foo":2:{s:3:"foo";s:3:"abc";s:8:"\0Foo\0bar";i:13;}";}s:6:"VarRef";R:3;}`
 //	sCSObject = `O:3:"Bar":1:{s:3:"foo";s:54:"O:3:"Foo":2:{s:3:"foo";s:3:"abc";s:8:"\0Foo\0bar";i:13;}";}`
 //	sVarRef   = `s:5:"hello";`
 //)
@@ -32,7 +32,36 @@ func (test TestData) IsCereal() bool {
 
 var testdata = []TestData{
 	{
-		n: "Array: Complex Escaped",
+		n: "Custom Object; Escaped",
+		f: phpcereal.CustomObjectTypeFlag,
+		t: "WPSEO_Sitemap_Cache_Data",
+		e: true,
+		s: `C:24:` +
+			`\"WPSEO_Sitemap_Cache_Data\":` +
+			`583:{a:2:{` +
+			`s:6:\"status\";s:2:\"ok\";s:3:\"xml\";s:536:\"<urlset xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:image=\"http://www.google.com/schemas/sitemap-image/1.1\" xsi:schemaLocation=\"http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd http://www.google.com/schemas/sitemap-image/1.1 http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd\" xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n	<url>\n		<loc>https://www.chemetal.com/category/news/</loc>\n		<lastmod>2021-09-28T23:11:41+00:00</lastmod>\n	</url>\n</urlset>\";` +
+			`}}`,
+		v: `WPSEO_Sitemap_Cache_Data[` +
+			`"status"=>"ok",` +
+			`"xml"=>"<urlset xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:image=\"http://www.google.com/schemas/sitemap-image/1.1\" xsi:schemaLocation=\"http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd http://www.google.com/schemas/sitemap-image/1.1 http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd\" xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n	<url>\n		<loc>https://www.chemetal.com/category/news/</loc>\n		<lastmod>2021-09-28T23:11:41+00:00</lastmod>\n	</url>\n</urlset>"` +
+			`]`,
+	},
+	{
+		n: "Short Custom Object",
+		f: phpcereal.CustomObjectTypeFlag,
+		t: "Student",
+		s: `C:7:"Student":27:{a:1:{s:4:"name";s:3:"Bob";}}`,
+		v: `Student["name"=>"Bob"]`,
+	},
+	{
+		n: "Custom Object",
+		f: phpcereal.CustomObjectTypeFlag,
+		t: "Student",
+		s: `C:7:"Student":73:{a:4:{s:4:"name";s:3:"Bob";s:5:"class";i:10;s:4:"roll";i:3;s:3:"gpa";d:4;}}`,
+		v: `Student["name"=>"Bob","class"=>10,"roll"=>3,"gpa"=>4.0]`,
+	},
+	{
+		n: "ArrayValue: Complex Escaped",
 		f: phpcereal.ArrayTypeFlag,
 		t: "array",
 		e: true,
@@ -83,7 +112,7 @@ var testdata = []TestData{
 			`28=>"regenerate-thumbnails/regenerate-thumbnails.php",` +
 			`20=>"revslider/revslider.php",` +
 			`21=>"taxonomy-terms-order/taxonomy-terms-order.php",` +
-			`22=>"wordpress-seo/wp-seo.php",23=>"wp-shopify-pro/wp-shopify.php",` +
+			`22=>"wordpress-seo/wp-seo.php",23=>"wp-shopify-pro/wp-shopify.php"` +
 			`]`,
 	},
 	{
@@ -101,18 +130,18 @@ var testdata = []TestData{
 		t: "float",
 	},
 	{
-		n: "Array of URLs",
+		n: "ArrayValue of URLs",
 		f: phpcereal.ArrayTypeFlag,
 		s: `a:3:{i:0;s:40:"https://en.wiktionary.org/wiki/enquoting";i:1;s:41:"https://en.wiktionary.org/wiki/whiff#Verb";i:2;s:42:"https://en.wiktionary.org/wiki/tea#Spanish";}`,
-		v: `[0=>"https://en.wikipedia.org/wiki/enquoting",1=>"https://en.wikipedia.org/wiki/whiff#Verb",2=>"https://en.wikipedia.org/wiki/tea#Spanish",]`,
+		v: `[0=>"https://en.wikipedia.org/wiki/enquoting",1=>"https://en.wikipedia.org/wiki/whiff#Verb",2=>"https://en.wikipedia.org/wiki/tea#Spanish"]`,
 		t: "array",
 		r: []string{"wiktionary.org", "wikipedia.org"},
 	},
 	{
-		n: "Array of Integers:[1,2,3]",
+		n: "ArrayValue of Integers:[1,2,3]",
 		f: phpcereal.ArrayTypeFlag,
 		s: "a:3:{i:0;i:1;i:1;i:2;i:2;i:3;}",
-		v: "[0=>1,1=>2,2=>3,]",
+		v: "[0=>1,1=>2,2=>3]",
 		t: "array",
 	},
 	{
@@ -169,6 +198,7 @@ func TestParsing(t *testing.T) {
 				t.Errorf("failed to validate: %s", test.s)
 			}
 			sp := phpcereal.NewParser(test.s)
+			sp.Unescape = test.e
 			root, err := sp.Parse()
 			if err != nil {
 				t.Error(err.Error())
@@ -190,7 +220,8 @@ func TestParsing(t *testing.T) {
 					sr.ReplaceString(test.r[0], test.r[1], -1)
 				}
 			}
-			if assert.Equal(t, phpcereal.PHPType(test.t), root.GetType()) {
+			rt := root.GetType()
+			if assert.Equal(t, phpcereal.PHPType(test.t), rt) {
 				assert.Equal(t, test.v, root.String())
 			} else {
 				t.Errorf("mismatch in types: %s <> %s", phpcereal.PHPType(test.t), root.GetType())

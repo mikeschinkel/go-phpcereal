@@ -11,8 +11,12 @@ func (a Array) Length() int {
 func (a Array) String() (s string) {
 	b := strings.Builder{}
 	b.WriteByte('[')
-	for _, e := range a {
+	last := len(a) - 1
+	for i, e := range a {
 		_s := e.String()
+		if i == last {
+			_s = _s[:len(_s)-1]
+		}
 		b.WriteString(_s)
 	}
 	b.WriteByte(']')
