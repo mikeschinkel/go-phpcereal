@@ -77,7 +77,7 @@ func (v StringValue) serialized(sql bool) string {
 	}
 	return fmt.Sprintf(pattern,
 		byte(v.GetTypeFlag()),
-		len(v.Value),
+		unescapedLen(v.Value),
 		v.getEscapedValue())
 }
 

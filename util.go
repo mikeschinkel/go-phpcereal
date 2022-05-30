@@ -15,7 +15,8 @@ func numDigits(n int) int {
 }
 
 func escape(s string) string {
-	return strings.Replace(s, `"`, `\\"`, -1)
+	s = strings.Replace(s, `\"`, `"`, -1)
+	return strings.Replace(s, `"`, `\"`, -1)
 }
 
 func builderWriteInt(b *strings.Builder, i int) {
@@ -43,4 +44,20 @@ func leftTrunc[C Chars](s C, n int) string {
 		return _s
 	}
 	return _s[:n]
+}
+
+func unescapedLen(value string) int {
+	length := len(value)
+	escaped := false
+	for i := length - 1; i >= 0; i-- {
+		if value[i] == '\\' {
+			if escaped {
+				continue
+			}
+			length--
+			escaped = true
+		}
+		escaped = false
+	}
+	return length
 }

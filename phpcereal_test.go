@@ -32,6 +32,13 @@ func (test TestData) IsCereal() bool {
 
 var testdata = []TestData{
 	{
+		n: "Short Custom Object",
+		f: phpcereal.CustomObjectTypeFlag,
+		t: "Student",
+		s: `C:7:"Student":27:{a:1:{s:4:"name";s:3:"Bob";}}`,
+		v: `Student["name"=>"Bob"]`,
+	},
+	{
 		n: "Custom Object; Escaped",
 		f: phpcereal.CustomObjectTypeFlag,
 		t: "WPSEO_Sitemap_Cache_Data",
@@ -45,13 +52,6 @@ var testdata = []TestData{
 			`"status"=>"ok",` +
 			`"xml"=>"<urlset xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:image=\"http://www.google.com/schemas/sitemap-image/1.1\" xsi:schemaLocation=\"http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd http://www.google.com/schemas/sitemap-image/1.1 http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd\" xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n	<url>\n		<loc>https://www.chemetal.com/category/news/</loc>\n		<lastmod>2021-09-28T23:11:41+00:00</lastmod>\n	</url>\n</urlset>"` +
 			`]`,
-	},
-	{
-		n: "Short Custom Object",
-		f: phpcereal.CustomObjectTypeFlag,
-		t: "Student",
-		s: `C:7:"Student":27:{a:1:{s:4:"name";s:3:"Bob";}}`,
-		v: `Student["name"=>"Bob"]`,
 	},
 	{
 		n: "Custom Object",

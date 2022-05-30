@@ -99,7 +99,7 @@ end:
 }
 
 func (v ArrayValue) SerializedLen() int {
-	return len(v.Serialized())
+	return unescapedLen(v.serialized(false))
 }
 
 func (v ArrayValue) Parse(p *Parser) (_ CerealValue) {

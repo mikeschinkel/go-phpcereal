@@ -37,19 +37,32 @@ func (c *CustomObjectValue) SQLSerialized() string {
 }
 
 func (c CustomObjectValue) serialized(escaped bool) string {
-	panic("TODO: use the escaped parameter")
+	//panic("TODO: use the escaped parameter")
 	if c.Bytes == nil {
 		builder := strings.Builder{}
 		builder.WriteByte(byte(CustomObjectTypeFlag))
 		builder.WriteByte(':')
 		name := string(c.Value.ClassName)
 		builder.WriteString(strconv.Itoa(len(name)))
-		builder.WriteString(`:"`)
+		if escaped {
+			builder.WriteString(`:\"`)
+		} else {
+			builder.WriteString(`:"`)
+		}
 		builder.WriteString(name)
-		builder.WriteString(`":`)
+		if escaped {
+			builder.WriteString(`\":`)
+		} else {
+			builder.WriteString(`":`)
+		}
+		c.ArrayValue.escaped = escaped
 		builderWriteInt(&builder, c.ArrayValue.SerializedLen())
 		builder.WriteString(":{")
-		builder.WriteString(c.ArrayValue.Serialized())
+		if escaped {
+			builder.WriteString(MaybeGetSQLSerialized(c.ArrayValue))
+		} else {
+			builder.WriteString(c.ArrayValue.Serialized())
+		}
 		builder.WriteByte('}')
 		c.Bytes = []byte(builder.String())
 	}
