@@ -16,7 +16,7 @@ import (
 type TestData struct {
 	n string             // Test Name
 	f phpcereal.TypeFlag // Type Flag
-	e bool               // Escaped
+	e bool               // escaped
 	s string             // Serialized String
 	v string             // Go Value
 	t string             // PHP Type
@@ -32,6 +32,45 @@ func (test TestData) IsCereal() bool {
 
 var testdata = []TestData{
 	{
+		n: "Object: Foo",
+		f: phpcereal.ObjectTypeFlag,
+		s: `O:3:"Foo":3:{s:3:"foo";s:3:"abc";s:8:"\0Foo\0bar";i:13;s:6:"\0*\0baz";b:1;}`,
+		v: `Foo{foo:"abc",~bar:13,^baz:true}`, // Legend: ~private, ^protected
+		t: "Foo",
+	},
+	{
+		n: "UnescapedEmptyString",
+		f: phpcereal.StringTypeFlag,
+		t: "string",
+		e: false,
+		s: `s:0:"";`,
+		v: `""`,
+	},
+	{
+		n: "EscapedEmptyString",
+		f: phpcereal.StringTypeFlag,
+		t: "string",
+		e: true,
+		s: `s:0:\"\";`,
+		v: `\"\"`,
+	},
+	{
+		n: "EscapedEmptyStringAsArrayElement",
+		f: phpcereal.ArrayTypeFlag,
+		t: "array",
+		e: true,
+		s: `a:1:{i:0;s:0:\"\";}`,
+		v: `[0=>\"\"]`,
+	},
+	{
+		n: "EmptyStringProperty",
+		f: phpcereal.ObjectTypeFlag,
+		t: "stdClass",
+		e: true,
+		s: `O:8:\"stdClass\":1:{s:3:\"foo\";s:0:\"\";}`,
+		v: `stdClass{foo:\"\"}`,
+	},
+	{
 		n: "Short Custom Object",
 		f: phpcereal.CustomObjectTypeFlag,
 		t: "Student",
@@ -39,18 +78,24 @@ var testdata = []TestData{
 		v: `Student["name"=>"Bob"]`,
 	},
 	{
-		n: "Custom Object; Escaped",
+		n: "Escaped Custom Object",
 		f: phpcereal.CustomObjectTypeFlag,
 		t: "WPSEO_Sitemap_Cache_Data",
 		e: true,
-		s: `C:24:` +
-			`\"WPSEO_Sitemap_Cache_Data\":` +
-			`583:{a:2:{` +
-			`s:6:\"status\";s:2:\"ok\";s:3:\"xml\";s:536:\"<urlset xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:image=\"http://www.google.com/schemas/sitemap-image/1.1\" xsi:schemaLocation=\"http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd http://www.google.com/schemas/sitemap-image/1.1 http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd\" xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n	<url>\n		<loc>https://www.chemetal.com/category/news/</loc>\n		<lastmod>2021-09-28T23:11:41+00:00</lastmod>\n	</url>\n</urlset>\";` +
-			`}}`,
+		s: `C:24:\"WPSEO_Sitemap_Cache_Data\":583:{` +
+			`a:2:{s:6:\"status\";s:2:\"ok\";s:3:\"xml\";s:536:\"<urlset xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ` +
+			`xmlns:image=\"http://www.google.com/schemas/sitemap-image/1.1\" xsi:schemaLocation=\"http://www.sitemaps.org/schemas/sitemap/0.9 ` +
+			`http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd http://www.google.com/schemas/sitemap-image/1.1 ` +
+			`http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd\" xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n	<url>` +
+			`\n		<loc>https://www.chemetal.com/category/news/</loc>\n		<lastmod>2021-09-28T23:11:41+00:00</lastmod>\n	</url>\n</urlset>\";}` +
+			`}`,
 		v: `WPSEO_Sitemap_Cache_Data[` +
-			`"status"=>"ok",` +
-			`"xml"=>"<urlset xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:image=\"http://www.google.com/schemas/sitemap-image/1.1\" xsi:schemaLocation=\"http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd http://www.google.com/schemas/sitemap-image/1.1 http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd\" xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n	<url>\n		<loc>https://www.chemetal.com/category/news/</loc>\n		<lastmod>2021-09-28T23:11:41+00:00</lastmod>\n	</url>\n</urlset>"` +
+			`\"status\"=>\"ok\",` +
+			`\"xml\"=>\"<urlset xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:image=\"http://www.google.com/schemas/sitemap-image/1.1\" ` +
+			`xsi:schemaLocation=\"http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd ` +
+			`http://www.google.com/schemas/sitemap-image/1.1 http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd\" ` +
+			`xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n	<url>\n		<loc>https://www.chemetal.com/category/news/</loc>\n		` +
+			`<lastmod>2021-09-28T23:11:41+00:00</lastmod>\n	</url>\n</urlset>\"` +
 			`]`,
 	},
 	{
@@ -61,7 +106,7 @@ var testdata = []TestData{
 		v: `Student["name"=>"Bob","class"=>10,"roll"=>3,"gpa"=>4.0]`,
 	},
 	{
-		n: "ArrayValue: Complex Escaped",
+		n: "Escaped Complex Array Value",
 		f: phpcereal.ArrayTypeFlag,
 		t: "array",
 		e: true,
@@ -81,46 +126,42 @@ var testdata = []TestData{
 			`i:12;s:21:\"include-me/plugin.php\";` +
 			`i:13;s:30:\"interactive-world-maps/map.php\";` +
 			`i:14;s:63:\"limit-login-attempts-reloaded/limit-login-attempts-reloaded.php\";` +
-			`i:15;s:25:\"menu-image/menu-image.php\";i:17;s:19:\"monarch/monarch.php\";` +
-			`i:16;s:33:\"posts-to-posts/posts-to-posts.php\";i:19;s:27:\"redirection/redirection.php\";` +
-			`i:28;s:47:\"regenerate-thumbnails/regenerate-thumbnails.php\";` +
+			`i:15;s:25:\"menu-image/menu-image.php\";` +
+			`i:16;s:33:\"posts-to-posts/posts-to-posts.php\";` +
+			`i:17;s:19:\"monarch/monarch.php\";` +
+			`i:18;s:47:\"regenerate-thumbnails/regenerate-thumbnails.php\";` +
+			`i:19;s:27:\"redirection/redirection.php\";` +
 			`i:20;s:23:\"revslider/revslider.php\";` +
 			`i:21;s:45:\"taxonomy-terms-order/taxonomy-terms-order.php\";` +
 			`i:22;s:24:\"wordpress-seo/wp-seo.php\";` +
 			`i:23;s:29:\"wp-shopify-pro/wp-shopify.php\";` +
 			`}`,
 		v: `[` +
-			`0=>"advanced-custom-fields-pro/acf.php",` +
-			`1=>"advanced-post-types-order/advanced-post-types-order.php",` +
-			`2=>"aryo-activity-log/aryo-activity-log.php",` +
-			`3=>"category-posts/cat-posts.php",` +
-			`4=>"classic-editor/classic-editor.php",` +
-			`5=>"constant-contact-forms/constant-contact-forms.php",` +
-			`6=>"disable-xml-rpc/disable-xml-rpc.php",` +
-			`7=>"divi_extended_column_layouts/divi_extended_column_layouts.php",` +
-			`8=>"duplicate-page/duplicatepage.php",` +
-			`9=>"elegant-themes-updater/elegant-themes-updater.php",` +
-			`10=>"enable-media-replace/enable-media-replace.php",` +
-			`11=>"enhanced-media-library-pro/enhanced-media-library.php",` +
-			`12=>"include-me/plugin.php",` +
-			`13=>"interactive-world-maps/map.php",` +
-			`14=>"limit-login-attempts-reloaded/limit-login-attempts-reloaded.php",` +
-			`15=>"menu-image/menu-image.php",` +
-			`17=>"monarch/monarch.php",` +
-			`16=>"posts-to-posts/posts-to-posts.php",` +
-			`19=>"redirection/redirection.php",` +
-			`28=>"regenerate-thumbnails/regenerate-thumbnails.php",` +
-			`20=>"revslider/revslider.php",` +
-			`21=>"taxonomy-terms-order/taxonomy-terms-order.php",` +
-			`22=>"wordpress-seo/wp-seo.php",23=>"wp-shopify-pro/wp-shopify.php"` +
+			`0=>\"advanced-custom-fields-pro/acf.php\",` +
+			`1=>\"advanced-post-types-order/advanced-post-types-order.php\",` +
+			`2=>\"aryo-activity-log/aryo-activity-log.php\",` +
+			`3=>\"category-posts/cat-posts.php\",` +
+			`4=>\"classic-editor/classic-editor.php\",` +
+			`5=>\"constant-contact-forms/constant-contact-forms.php\",` +
+			`6=>\"disable-xml-rpc/disable-xml-rpc.php\",` +
+			`7=>\"divi_extended_column_layouts/divi_extended_column_layouts.php\",` +
+			`8=>\"duplicate-page/duplicatepage.php\",` +
+			`9=>\"elegant-themes-updater/elegant-themes-updater.php\",` +
+			`10=>\"enable-media-replace/enable-media-replace.php\",` +
+			`11=>\"enhanced-media-library-pro/enhanced-media-library.php\",` +
+			`12=>\"include-me/plugin.php\",` +
+			`13=>\"interactive-world-maps/map.php\",` +
+			`14=>\"limit-login-attempts-reloaded/limit-login-attempts-reloaded.php\",` +
+			`15=>\"menu-image/menu-image.php\",` +
+			`16=>\"posts-to-posts/posts-to-posts.php\",` +
+			`17=>\"monarch/monarch.php\",` +
+			`18=>\"regenerate-thumbnails/regenerate-thumbnails.php\",` +
+			`19=>\"redirection/redirection.php\",` +
+			`20=>\"revslider/revslider.php\",` +
+			`21=>\"taxonomy-terms-order/taxonomy-terms-order.php\",` +
+			`22=>\"wordpress-seo/wp-seo.php\",` +
+			`23=>\"wp-shopify-pro/wp-shopify.php\"` +
 			`]`,
-	},
-	{
-		n: "Object: Foo",
-		f: phpcereal.ObjectTypeFlag,
-		s: `O:3:"Foo":3:{s:3:"foo";s:3:"abc";s:8:"\0Foo\0bar";i:13;s:6:"\0*\0baz";b:1;}`,
-		v: `Foo{foo:"abc",~bar:13,^baz:true}`, // Legend: ~private, ^protected
-		t: "Foo",
 	},
 	{
 		n: "Float:12.34",
@@ -198,17 +239,13 @@ func TestParsing(t *testing.T) {
 				t.Errorf("failed to validate: %s", test.s)
 			}
 			sp := phpcereal.NewParser(test.s)
-			sp.Unescape = test.e
+			sp.Escaped = test.e
 			root, err := sp.Parse()
 			if err != nil {
 				t.Error(err.Error())
 				return
 			}
-			if test.e {
-				s = phpcereal.MaybeGetSQLSerialized(root)
-			} else {
-				s = root.Serialized()
-			}
+			s = root.Serialized()
 			assert.Equal(t, test.s, s)
 			if assert.NotEmpty(t, s) {
 				assert.Equal(t, test.f, phpcereal.TypeFlag(s[0]))

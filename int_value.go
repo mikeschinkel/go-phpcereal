@@ -8,7 +8,16 @@ import (
 var _ CerealValue = (*IntValue)(nil)
 
 type IntValue struct {
-	Value int
+	escaped bool
+	Value   int
+}
+
+func (v IntValue) GetEscaped() bool {
+	return v.escaped
+}
+
+func (v *IntValue) SetEscaped(e bool) {
+	v.escaped = e
 }
 
 func (v IntValue) GetValue() interface{} {
@@ -20,11 +29,6 @@ func (v IntValue) GetType() PHPType {
 }
 
 func (v IntValue) GetTypeFlag() TypeFlag {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (v IntValue) GetValueType() TypeFlag {
 	return IntTypeFlag
 }
 

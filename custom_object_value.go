@@ -8,7 +8,6 @@ import (
 
 var _ CerealValue = (*CustomObjectValue)(nil)
 var _ StringReplacer = (*CustomObjectValue)(nil)
-var _ SQLSerializedGetter = (*CustomObjectValue)(nil)
 
 type CustomObjectValue struct {
 	ObjectValue
@@ -18,13 +17,6 @@ type CustomObjectValue struct {
 func (c CustomObjectValue) GetTypeFlag() TypeFlag {
 	return CustomObjectTypeFlag
 }
-func (c CustomObjectValue) GetValueType() TypeFlag {
-	return CustomObjectTypeFlag
-}
-func (c CustomObjectValue) Serialized() string {
-	return c.serialized(false)
-}
-
 func (c CustomObjectValue) String() string {
 	builder := strings.Builder{}
 	builder.WriteString(string(c.Value.ClassName))
@@ -32,45 +24,36 @@ func (c CustomObjectValue) String() string {
 	return builder.String()
 }
 
-func (c *CustomObjectValue) SQLSerialized() string {
-	return c.serialized(true)
-}
-
-func (c CustomObjectValue) serialized(escaped bool) string {
-	//panic("TODO: use the escaped parameter")
-	if c.Bytes == nil {
+func (c *CustomObjectValue) Serialized() string {
+	if !c.BytesSet() {
 		builder := strings.Builder{}
 		builder.WriteByte(byte(CustomObjectTypeFlag))
 		builder.WriteByte(':')
 		name := string(c.Value.ClassName)
 		builder.WriteString(strconv.Itoa(len(name)))
-		if escaped {
+		if c.escaped {
 			builder.WriteString(`:\"`)
 		} else {
 			builder.WriteString(`:"`)
 		}
 		builder.WriteString(name)
-		if escaped {
+		if c.escaped {
 			builder.WriteString(`\":`)
 		} else {
 			builder.WriteString(`":`)
 		}
-		c.ArrayValue.escaped = escaped
+		c.ArrayValue.SetEscaped(c.escaped)
 		builderWriteInt(&builder, c.ArrayValue.SerializedLen())
 		builder.WriteString(":{")
-		if escaped {
-			builder.WriteString(MaybeGetSQLSerialized(c.ArrayValue))
-		} else {
-			builder.WriteString(c.ArrayValue.Serialized())
-		}
+		builder.WriteString(c.ArrayValue.Serialized())
 		builder.WriteByte('}')
-		c.Bytes = []byte(builder.String())
+		c.SetBytes([]byte(builder.String()))
 	}
-	return string(c.Bytes)
+	return string(c.bytes)
 }
 
 func (c CustomObjectValue) SerializedLen() int {
-	return len(c.Serialized())
+	return unescapedLength(c.Serialized())
 }
 
 func (c CustomObjectValue) Parse(p *Parser) (_ CerealValue) {
@@ -92,13 +75,13 @@ func (c CustomObjectValue) Parse(p *Parser) (_ CerealValue) {
 		goto end
 	}
 
-	arrBytes = p.EatQuotedString(length, CloseBrace, p.Unescape)
+	arrBytes = p.EatQuotedString(length, CloseBrace, p.Escaped)
 	if p.Err != nil || len(arrBytes) == 0 {
 		p.Err = fmt.Errorf("error parsing custom object array as string; %w", p.Err)
 		goto end
 	}
 	ap = NewParser(arrBytes)
-	ap.Unescape = p.Unescape
+	ap.Escaped = p.Escaped
 	cv, err = ap.Parse()
 	if err != nil {
 		p.Err = fmt.Errorf("error parsing custom object array; %w", err)

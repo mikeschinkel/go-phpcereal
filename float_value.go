@@ -7,6 +7,7 @@ import (
 var _ CerealValue = (*FloatValue)(nil)
 
 type FloatValue struct {
+	escaped      bool
 	Integer      int
 	Fraction     int
 	omitFraction bool
@@ -23,6 +24,14 @@ func (v FloatValue) GetType() PHPType {
 
 func (v FloatValue) GetTypeFlag() TypeFlag {
 	return FloatTypeFlag
+}
+
+func (v FloatValue) GetEscaped() bool {
+	return v.escaped
+}
+
+func (v *FloatValue) SetEscaped(e bool) {
+	v.escaped = e
 }
 
 func (v FloatValue) String() string {

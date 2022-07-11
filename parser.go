@@ -1,13 +1,14 @@
 package phpcereal
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"unicode/utf8"
 )
 
 type Parser struct {
-	Unescape bool
+	Escaped  bool
 	Head     []byte
 	Bytes    []byte
 	Type     TypeFlag
@@ -126,6 +127,45 @@ end:
 	return bytes
 }
 
+func (p *Parser) handleZeroLengthString(quote rune) (err error) {
+
+	advance := func() error {
+		size := p.advance()
+		if size != 1 {
+			err = fmt.Errorf("expected a rune size of 1, got %d", size)
+		}
+		return err
+	}
+
+	err = advance()
+	if err != nil {
+		goto end
+	}
+	if p.Escaped {
+		if p.LastRune != BackSlash {
+			err = fmt.Errorf("expected an escaping backslash, got %q", p.LastRune)
+			goto end
+		}
+		err = advance()
+		if err != nil {
+			goto end
+		}
+	}
+	if p.LastRune != quote {
+		p.Err = fmt.Errorf("expected closing quote but got %q", p.LastRune)
+		goto end
+	}
+
+end:
+	if err != nil {
+		p.Err = fmt.Errorf("expected closing quote type %q; %w",
+			quote,
+			err,
+		)
+	}
+	return err
+}
+
 func (p *Parser) EatQuotedString(length int, quote rune, quotesEscaped ...bool) (bytes []byte) {
 	var inEsc bool
 	var quotePos int
@@ -135,6 +175,7 @@ func (p *Parser) EatQuotedString(length int, quote rune, quotesEscaped ...bool) 
 
 	count := 0
 	if length == 0 {
+		p.Err = p.handleZeroLengthString(quote)
 		goto end
 	}
 	if len(quotesEscaped) > 0 {
@@ -143,6 +184,9 @@ func (p *Parser) EatQuotedString(length int, quote rune, quotesEscaped ...bool) 
 	quotePos = length + 1
 	for {
 		count += p.advance()
+		if p.Err != nil {
+			goto end
+		}
 		switch {
 		case p.LastRune == quote:
 			switch {
@@ -201,7 +245,7 @@ func (p *Parser) EatQuotedString(length int, quote rune, quotesEscaped ...bool) 
 		}
 	}
 end:
-	if p.Err == nil {
+	if p.Err == nil && 0 < count {
 		bytes = make([]byte, count)
 		copy(bytes, start[:count])
 	}
@@ -292,7 +336,7 @@ func (p *Parser) Pos() int {
 func (p *Parser) Parse() (cv CerealValue, _ error) {
 
 	tf := p.EatTypeFlag()
-	pf, err := GetParseFunc(tf)
+	pf, err := p.GetParseFunc(tf)
 	if err != nil {
 		p.Err = err
 		goto end
@@ -303,8 +347,8 @@ func (p *Parser) Parse() (cv CerealValue, _ error) {
 		pcs.SetTypeFlag(tf)
 	}
 	if p.Err != nil {
-		msg := "invalid format at position %d, possible data corruption for value type %q in: %s; %w"
-		p.Err = fmt.Errorf(msg, p.Pos(), tf, string(p.Head), p.Err)
+		msg := "%w; invalid format at position %d, possible data corruption for value type %q in: %s; "
+		p.Err = fmt.Errorf(msg, p.Err, p.Pos(), tf, string(p.Head))
 	}
 end:
 	return cv, p.Err
@@ -312,51 +356,52 @@ end:
 
 type ParseFunc func(p *Parser) CerealValue
 
-func GetParseFunc(tf TypeFlag) (pf ParseFunc, err error) {
+func (p *Parser) GetParseFunc(tf TypeFlag) (pf ParseFunc, err error) {
 	switch tf {
 	case ArrayTypeFlag:
 		pf = func(p *Parser) CerealValue {
-			return ArrayValue{}.Parse(p)
+			return ArrayValue{escaped: p.Escaped}.Parse(p)
 		}
 
 	case NULLTypeFlag:
 		pf = func(p *Parser) CerealValue {
-			return NullValue{}.Parse(p)
+			return NullValue{escaped: p.Escaped}.Parse(p)
 		}
 
 	case StringTypeFlag:
 		pf = func(p *Parser) CerealValue {
-			return StringValue{}.Parse(p)
+			return StringValue{escaped: p.Escaped}.Parse(p)
 		}
 
 	case PHP6StringTypeFlag:
 		pf = func(p *Parser) CerealValue {
-			return StringValue{}.Parse(p)
+			return StringValue{escaped: p.Escaped}.Parse(p)
 		}
 
 	case BoolTypeFlag:
 		pf = func(p *Parser) CerealValue {
-			return BoolValue{}.Parse(p)
+			return BoolValue{escaped: p.Escaped}.Parse(p)
 		}
 
 	case IntTypeFlag:
 		pf = func(p *Parser) CerealValue {
-			return IntValue{}.Parse(p)
+			return IntValue{escaped: p.Escaped}.Parse(p)
 		}
 
 	case FloatTypeFlag:
 		pf = func(p *Parser) CerealValue {
-			return FloatValue{}.Parse(p)
+			return FloatValue{escaped: p.Escaped}.Parse(p)
 		}
 
 	case ObjectTypeFlag:
 		pf = func(p *Parser) CerealValue {
-			return ObjectValue{}.Parse(p)
+			return ObjectValue{escaped: p.Escaped}.Parse(p)
 		}
 
 	case CustomObjectTypeFlag:
 		pf = func(p *Parser) CerealValue {
-			return CustomObjectValue{}.Parse(p)
+			ov := ObjectValue{escaped: p.Escaped}
+			return CustomObjectValue{ObjectValue: ov}.Parse(p)
 		}
 
 	case ObjRefTypeFlag:
@@ -382,6 +427,10 @@ func GetParseFunc(tf TypeFlag) (pf ParseFunc, err error) {
 }
 
 func (p *Parser) decode() (r rune, size int) {
+	if len(p.Bytes) == 0 {
+		p.Err = errors.New("unexpected end of parse buffer")
+		goto end
+	}
 	r, size = rune(p.Bytes[0]), 1
 	if r >= utf8.RuneSelf {
 		r, size = utf8.DecodeRune(p.Bytes)
@@ -397,6 +446,7 @@ func (p *Parser) decode() (r rune, size int) {
 			p.Bytes = []byte{}
 		}
 	}
+end:
 	return r, size
 }
 

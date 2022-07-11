@@ -39,5 +39,6 @@ func (o Object) String() (s string) {
 		}
 	}
 	b.WriteByte('}')
-	return b.String()
+	s = b.String()
+	return s
 }

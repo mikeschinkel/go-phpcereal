@@ -5,8 +5,9 @@ import (
 )
 
 type ArrayElement struct {
-	Key   CerealValue
-	Value CerealValue
+	escaped bool
+	Key     CerealValue
+	Value   CerealValue
 }
 
 func (e ArrayElement) String() (s string) {

@@ -9,16 +9,17 @@ import (
 
 var _ CerealValue = (*ObjectValue)(nil)
 var _ StringReplacer = (*ObjectValue)(nil)
-var _ SQLSerializedGetter = (*ObjectValue)(nil)
 
 type ObjectValue struct {
+	escaped  bool
 	Value    Object
 	LenBytes []byte // Array Length but as []byte vs. int
-	Bytes    []byte
+	bytes    []byte
 }
 
 func (v ObjectValue) ReplaceString(from, to string, times int) {
 	v.Value.ReplaceString(from, to, times)
+	v.bytes = nil
 }
 
 func (v ObjectValue) GetValue() interface{} {
@@ -37,58 +38,70 @@ func (v ObjectValue) String() string {
 	return v.Value.String()
 }
 
-func (v ObjectValue) GetValueType() TypeFlag {
-	return ObjectTypeFlag
+func (v ObjectValue) GetEscaped() bool {
+	return v.escaped
+}
+
+func (v *ObjectValue) SetEscaped(e bool) {
+	if v.escaped != e {
+		v.escaped = e
+		v.bytes = nil
+	}
+}
+
+func (v ObjectValue) GetBytes() []byte {
+	return v.bytes
+}
+
+func (v *ObjectValue) SetBytes(b []byte) {
+	v.bytes = b
+}
+
+func (v *ObjectValue) BytesSet() bool {
+	return v.bytes != nil
 }
 
 func (v ObjectValue) Serialized() string {
-	return v.serialized(false)
-}
-
-func (v *ObjectValue) SQLSerialized() string {
-	return v.serialized(true)
-}
-
-func (v ObjectValue) serialized(sql bool) string {
-	if v.Bytes == nil {
+	writeQuote := func(parts *strings.Builder) {
+		if v.escaped {
+			parts.WriteString(`\"`)
+		} else {
+			parts.WriteByte('"')
+		}
+	}
+	if v.bytes == nil {
 		parts := strings.Builder{}
 		parts.WriteByte(byte(ObjectTypeFlag))
 		parts.WriteByte(':')
 		name := string(v.Value.ClassName)
 		parts.WriteString(strconv.Itoa(len(name)))
-		parts.WriteString(`:"`)
+		parts.WriteByte(':')
+		writeQuote(&parts)
 		parts.WriteString(name)
-		parts.WriteString(`":`)
+		writeQuote(&parts)
+		parts.WriteByte(':')
 		builderWriteInt(&parts, v.Value.Size())
 		parts.WriteString(":{")
 		for _, prop := range v.Value.Properties {
-			parts.WriteString(fmt.Sprintf(`%c:%d:"%s";`,
+			parts.WriteString(fmt.Sprintf(`%c:%d:%s;`,
 				byte(StringTypeFlag),
-				stringLengthIgnoreNulls(escape(prop.Name)),
-				prop.maybeGetSQLName(sql)))
-			if sql {
-				// If sql==true, e.g. generate serialized for SQL
-				// then the element *may* need to be serialized.
-				parts.WriteString(MaybeGetSQLSerialized(prop.Value))
-			} else {
-				// If sql==false, e.g. do not
-				// generate serialized for SQL.
-				parts.WriteString(prop.Value.Serialized())
-			}
+				prop.GetNameLength(),
+				prop.GetQuotedName(),
+			))
+			parts.WriteString(prop.Value.Serialized())
 		}
 		parts.WriteByte('}')
-		v.Bytes = []byte(parts.String())
+		v.bytes = []byte(parts.String())
 	}
-	return string(v.Bytes)
+	return string(v.bytes)
 }
 
-func (v ObjectValue) SerializedLen() int {
-	return len(v.Serialized())
+func (v ObjectValue) SerializedLen() (length int) {
+	return unescapedLength(v.Serialized())
 }
 
 func (v *ObjectValue) ParseHeader(p *Parser) (length int, lenBytes []byte) {
 	var r rune
-	var quotesEscaped bool
 	var nameLen int
 	var nameBytes []byte
 
@@ -98,17 +111,21 @@ func (v *ObjectValue) ParseHeader(p *Parser) (length int, lenBytes []byte) {
 		goto end
 	}
 
-	r = p.PeekNext()
-	if r == BackSlash {
+	r = p.EatNext()
+	if v.escaped {
+		if r != BackSlash {
+			p.Err = fmt.Errorf("expected backslash to escape quoted class name, got %q", r)
+			goto end
+		}
 		r = p.EatNext()
-		quotesEscaped = true
 	}
 
-	if !p.Match('"', "enquoting object class name") {
+	if r != DoubleQuote {
+		p.Err = fmt.Errorf("expected enquoted object class name, got %q", r)
 		goto end
 	}
 
-	nameBytes = p.EatQuotedString(nameLen, '"', quotesEscaped)
+	nameBytes = p.EatQuotedString(nameLen, DoubleQuote, v.escaped)
 	if nameBytes == nil {
 		p.Err = errors.New("error; empty object class name")
 		goto end
@@ -143,11 +160,13 @@ func (v ObjectValue) Parse(p *Parser) (_ CerealValue) {
 		goto end
 	}
 
-	props = make(ObjectProperties, length)
 	if !p.Match('{') {
 		goto end
 	} else {
+		v.bytes = nil
+		props = make(ObjectProperties, length)
 		for index, prop := range props {
+			prop.SetEscaped(v.escaped)
 			prop.Parse(p)
 			if p.Err != nil {
 				p.Err = fmt.Errorf("error parsing property #%d of class %s; %w",

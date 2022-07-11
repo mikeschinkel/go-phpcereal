@@ -4,6 +4,8 @@ type CerealValue interface {
 	GetValue() interface{}
 	GetType() PHPType
 	GetTypeFlag() TypeFlag
+	GetEscaped() bool
+	SetEscaped(bool)
 	String() string
 	Serialized() string
 	SerializedLen() int

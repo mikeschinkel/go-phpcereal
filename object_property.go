@@ -13,9 +13,33 @@ const (
 )
 
 type ObjectProperty struct {
-	Name       string
+	escaped    bool
+	name       string
 	Visibility Visibility
 	Value      CerealValue
+}
+
+func (prop ObjectProperty) GetName() string {
+	return prop.name
+}
+
+func (prop ObjectProperty) GetNameLength() int {
+	return stringLengthIgnoreNulls(prop.name)
+}
+
+func (prop ObjectProperty) GetQuotedName() string {
+	if prop.escaped {
+		return fmt.Sprintf(`\"%s\"`, prop.name)
+	}
+	return fmt.Sprintf(`"%s"`, prop.name)
+}
+
+func (prop ObjectProperty) GetEscaped() bool {
+	return prop.escaped
+}
+
+func (prop *ObjectProperty) SetEscaped(e bool) {
+	prop.escaped = e
 }
 
 // NonPublicName returns just the name and not the other stuff for private and protected vars
@@ -24,7 +48,7 @@ type ObjectProperty struct {
 // 	Protected:  \0*\0propName
 //
 func (prop ObjectProperty) NonPublicName() (s string) {
-	s = prop.Name
+	s = prop.name
 	for i := len(s) - 2; i >= 0; i-- {
 		if s[i] != '0' {
 			continue
@@ -33,16 +57,6 @@ func (prop ObjectProperty) NonPublicName() (s string) {
 		break
 	}
 	return s
-}
-
-// maybeGetSQLName returns the escaped serialized string for on
-// object property name if sql==true, otherwise it just returns
-// the escaped name of the object property.
-func (prop ObjectProperty) maybeGetSQLName(sql bool) (s string) {
-	if sql {
-		return fmt.Sprintf(`\"%s"\`, escape(prop.Name))
-	}
-	return escape(prop.Name)
 }
 
 func (prop ObjectProperty) String() (s string) {
@@ -69,7 +83,7 @@ func (prop *ObjectProperty) Parse(p *Parser) {
 		p.Err = fmt.Errorf(msg, StringTypeFlag, nameTypeFlag)
 		goto end
 	}
-	pf, err = GetParseFunc(nameTypeFlag)
+	pf, err = p.GetParseFunc(nameTypeFlag)
 	if err != nil {
 		p.Err = err
 		goto end
@@ -79,17 +93,17 @@ func (prop *ObjectProperty) Parse(p *Parser) {
 		p.Err = fmt.Errorf("error parsing property name; %w", p.Err)
 		goto end
 	}
-	prop.Name = cv.GetValue().(string)
-	if prop.Name == "" {
+	prop.name = cv.GetValue().(string)
+	if prop.name == "" {
 		p.Err = fmt.Errorf("object property name is empty")
 		goto end
 	}
-	if prop.Name[0:2] == "\\0" {
-		if len(prop.Name) <= 3 {
+	if prop.name[0:2] == "\\0" {
+		if len(prop.name) <= 3 {
 			p.Err = fmt.Errorf("truncated object property name")
 			goto end
 		}
-		if prop.Name[2] == '*' {
+		if prop.name[2] == '*' {
 			// Protected -seem-to- have the format "\0*\0propname"
 			prop.Visibility = Protected
 		} else {
@@ -97,7 +111,7 @@ func (prop *ObjectProperty) Parse(p *Parser) {
 			prop.Visibility = Private
 		}
 	}
-	pf, err = GetParseFunc(p.EatTypeFlag())
+	pf, err = p.GetParseFunc(p.EatTypeFlag())
 	if err != nil {
 		p.Err = err
 		goto end

@@ -46,7 +46,7 @@ func leftTrunc[C Chars](s C, n int) string {
 	return _s[:n]
 }
 
-func unescapedLen(value string) int {
+func unescapedLength(value string) int {
 	length := len(value)
 	escaped := false
 	for i := length - 1; i >= 0; i-- {

@@ -7,14 +7,13 @@ import (
 
 var _ CerealValue = (*ArrayValue)(nil)
 var _ StringReplacer = (*ArrayValue)(nil)
-var _ SQLSerializedGetter = (*ArrayValue)(nil)
 
 type boolMappedBytes map[bool][]byte
 type ArrayValue struct {
+	escaped  bool
 	Value    Array
 	LenBytes []byte // Array Length but as []byte vs. int
 	bytes    boolMappedBytes
-	escaped  bool
 }
 
 func (v *ArrayValue) Length() int {
@@ -50,28 +49,27 @@ func (v ArrayValue) GetTypeFlag() TypeFlag {
 	return ArrayTypeFlag
 }
 
+func (v ArrayValue) GetEscaped() bool {
+	return v.escaped
+}
+
+func (v *ArrayValue) SetEscaped(e bool) {
+	v.escaped = e
+}
+
 func (v ArrayValue) String() string {
 	return v.Value.String()
 }
 
-func (v *ArrayValue) SQLSerialized() string {
-	return v.serialized(true)
-}
-
 func (v *ArrayValue) Serialized() (s string) {
-	return v.serialized(false)
-}
-
-func (v *ArrayValue) serialized(escaped bool) (s string) {
 	var builder strings.Builder
 	if v.bytes == nil {
 		v.bytes = boolMappedBytes{
 			true:  nil,
 			false: nil,
 		}
-		v.escaped = escaped
 	}
-	if v.bytes[escaped] != nil {
+	if v.bytes[v.escaped] != nil {
 		goto end
 	}
 	builder = strings.Builder{}
@@ -80,26 +78,19 @@ func (v *ArrayValue) serialized(escaped bool) (s string) {
 	builderWriteInt(&builder, v.Value.Length())
 	builder.WriteString(":{")
 	for _, element := range v.Value {
-		if escaped {
-			// If escaped==true, e.g. generate serialized for SQL
-			// then the element *may* need to be serialized.
-			builder.WriteString(MaybeGetSQLSerialized(element.Key))
-			builder.WriteString(MaybeGetSQLSerialized(element.Value))
-		} else {
-			// If escaped==false, e.g. do not
-			// generate serialized for SQL.
-			builder.WriteString(element.Key.Serialized())
-			builder.WriteString(element.Value.Serialized())
-		}
+		element.Key.SetEscaped(v.escaped)
+		builder.WriteString(element.Key.Serialized())
+		element.Value.SetEscaped(v.escaped)
+		builder.WriteString(element.Value.Serialized())
 	}
 	builder.WriteByte('}')
-	v.bytes[escaped] = []byte(builder.String())
+	v.bytes[v.escaped] = []byte(builder.String())
 end:
-	return string(v.bytes[escaped])
+	return string(v.bytes[v.escaped])
 }
 
-func (v ArrayValue) SerializedLen() int {
-	return unescapedLen(v.serialized(false))
+func (v ArrayValue) SerializedLen() (length int) {
+	return unescapedLength(v.Serialized())
 }
 
 func (v ArrayValue) Parse(p *Parser) (_ CerealValue) {
@@ -118,7 +109,7 @@ func (v ArrayValue) Parse(p *Parser) (_ CerealValue) {
 		goto end
 	} else {
 		for index, element := range elements {
-			pf, err := GetParseFunc(p.EatTypeFlag())
+			pf, err := p.GetParseFunc(p.EatTypeFlag())
 			if err != nil {
 				p.Err = err
 				goto end
@@ -128,7 +119,7 @@ func (v ArrayValue) Parse(p *Parser) (_ CerealValue) {
 				p.Err = fmt.Errorf("error parsing array key #%d; %w", index, p.Err)
 				goto end
 			}
-			pf, err = GetParseFunc(p.EatTypeFlag())
+			pf, err = p.GetParseFunc(p.EatTypeFlag())
 			if err != nil {
 				p.Err = err
 				goto end

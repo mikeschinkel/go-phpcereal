@@ -11,12 +11,13 @@ var _ TypeFlagSetter = (*StringValue)(nil)
 var _ StringReplacer = (*StringValue)(nil)
 
 type StringValue struct {
-	TypeFlag    TypeFlag
-	Value       string
-	LengthBytes []byte
-	Length      int
-	quoteType   rune
-	quotedValue string
+	escaped      bool
+	TypeFlag     TypeFlag
+	Value        string
+	LengthBytes  []byte
+	Length       int
+	quoteType    rune
+	escapedValue string
 }
 
 func (v *StringValue) ReplaceString(from, to string, times int) {
@@ -51,33 +52,42 @@ func (v StringValue) GetTypeFlag() TypeFlag {
 	return v.TypeFlag
 }
 
+func (v StringValue) GetEscaped() bool {
+	return v.escaped
+}
+
+func (v *StringValue) SetEscaped(e bool) {
+	v.escaped = e
+}
+
 func (v StringValue) String() string {
-	return fmt.Sprintf(`"%s"`, v.getEscapedValue())
+	var pattern = `"%s"`
+	if v.escaped {
+		pattern = `\"%s\"`
+	}
+	return fmt.Sprintf(pattern, v.getEscapedValue())
 }
 
 func (v *StringValue) getEscapedValue() string {
-	if v.quotedValue == "" {
-		v.quotedValue = escape(v.Value)
+	if len(v.Value) == 0 {
+		return v.Value
 	}
-	return v.quotedValue
+	if v.escapedValue == "" {
+		v.escapedValue = escape(v.Value)
+	}
+	return v.escapedValue
 }
 
 func (v StringValue) Serialized() string {
-	return v.serialized(false)
-}
-
-func (v StringValue) SQLSerialized() string {
-	return v.serialized(true)
-}
-
-func (v StringValue) serialized(sql bool) string {
-	pattern := `%c:%d:"%s";`
-	if sql {
+	var pattern string
+	if v.escaped {
 		pattern = `%c:%d:\"%s\";`
+	} else {
+		pattern = `%c:%d:"%s";`
 	}
 	return fmt.Sprintf(pattern,
 		byte(v.GetTypeFlag()),
-		unescapedLen(v.Value),
+		unescapedLength(v.Value),
 		v.getEscapedValue())
 }
 

@@ -5,7 +5,8 @@ import "fmt"
 var _ CerealValue = (*BoolValue)(nil)
 
 type BoolValue struct {
-	Value bool
+	escaped bool
+	Value   bool
 }
 
 func (v BoolValue) GetValue() interface{} {
@@ -18,6 +19,14 @@ func (v BoolValue) GetType() PHPType {
 
 func (v BoolValue) GetTypeFlag() TypeFlag {
 	return BoolTypeFlag
+}
+
+func (v BoolValue) GetEscaped() bool {
+	return v.escaped
+}
+
+func (v *BoolValue) SetEscaped(e bool) {
+	v.escaped = e
 }
 
 func (v BoolValue) String() string {
