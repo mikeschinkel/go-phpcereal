@@ -32,6 +32,116 @@ func (test TestData) IsCereal() bool {
 
 var testdata = []TestData{
 	{
+		n: "Regex-escaped characters",
+		f: phpcereal.StringTypeFlag,
+		e: false,
+		s: `s:17:"^wp-sitemap\\.xml$";`,
+		t: "string",
+		v: `"^wp-sitemap\\.xml$"`, // Legend: ~private, ^protected
+	},
+	{
+		n: "Rewrite Rules",
+		f: phpcereal.ArrayTypeFlag,
+		e: true,
+		s: `a:93:{s:11:\"^wp-json/?$\";s:22:\"index.php?rest_route=/\";s:14:\"^wp-json/(.*)?\";s:33:\"index.php?rest_route=/$matches[1]\";s:21:\"^index.php/wp-json/?$\";s:22:\"index.php?rest_route=/\";s:24:\"^index.php/wp-json/(.*)?\";s:33:\"index.php?rest_route=/$matches[1]\";s:17:\"^wp-sitemap\\.xml$\";s:23:\"index.php?sitemap=index\";s:17:\"^wp-sitemap\\.xsl$\";s:36:\"index.php?sitemap-stylesheet=sitemap\";s:23:\"^wp-sitemap-index\\.xsl$\";s:34:\"index.php?sitemap-stylesheet=index\";s:48:\"^wp-sitemap-([a-z]+?)-([a-z\\d_-]+?)-(\\d+?)\\.xml$\";s:75:\"index.php?sitemap=$matches[1]&sitemap-subtype=$matches[2]&paged=$matches[3]\";s:34:\"^wp-sitemap-([a-z]+?)-(\\d+?)\\.xml$\";s:47:\"index.php?sitemap=$matches[1]&paged=$matches[2]\";s:47:\"category/(.+?)/feed/(feed|rdf|rss|rss2|atom)/?$\";s:52:\"index.php?category_name=$matches[1]&feed=$matches[2]\";s:42:\"category/(.+?)/(feed|rdf|rss|rss2|atom)/?$\";s:52:\"index.php?category_name=$matches[1]&feed=$matches[2]\";s:23:\"category/(.+?)/embed/?$\";s:46:\"index.php?category_name=$matches[1]&embed=true\";s:35:\"category/(.+?)/page/?([0-9]{1,})/?$\";s:53:\"index.php?category_name=$matches[1]&paged=$matches[2]\";s:17:\"category/(.+?)/?$\";s:35:\"index.php?category_name=$matches[1]\";s:44:\"tag/([^/]+)/feed/(feed|rdf|rss|rss2|atom)/?$\";s:42:\"index.php?tag=$matches[1]&feed=$matches[2]\";s:39:\"tag/([^/]+)/(feed|rdf|rss|rss2|atom)/?$\";s:42:\"index.php?tag=$matches[1]&feed=$matches[2]\";s:20:\"tag/([^/]+)/embed/?$\";s:36:\"index.php?tag=$matches[1]&embed=true\";s:32:\"tag/([^/]+)/page/?([0-9]{1,})/?$\";s:43:\"index.php?tag=$matches[1]&paged=$matches[2]\";s:14:\"tag/([^/]+)/?$\";s:25:\"index.php?tag=$matches[1]\";s:45:\"type/([^/]+)/feed/(feed|rdf|rss|rss2|atom)/?$\";s:50:\"index.php?post_format=$matches[1]&feed=$matches[2]\";s:40:\"type/([^/]+)/(feed|rdf|rss|rss2|atom)/?$\";s:50:\"index.php?post_format=$matches[1]&feed=$matches[2]\";s:21:\"type/([^/]+)/embed/?$\";s:44:\"index.php?post_format=$matches[1]&embed=true\";s:33:\"type/([^/]+)/page/?([0-9]{1,})/?$\";s:51:\"index.php?post_format=$matches[1]&paged=$matches[2]\";s:15:\"type/([^/]+)/?$\";s:33:\"index.php?post_format=$matches[1]\";s:12:\"robots\\.txt$\";s:18:\"index.php?robots=1\";s:13:\"favicon\\.ico$\";s:19:\"index.php?favicon=1\";s:48:\".*wp-(atom|rdf|rss|rss2|feed|commentsrss2)\\.php$\";s:18:\"index.php?feed=old\";s:20:\".*wp-app\\.php(/.*)?$\";s:19:\"index.php?error=403\";s:18:\".*wp-register.php$\";s:23:\"index.php?register=true\";s:32:\"feed/(feed|rdf|rss|rss2|atom)/?$\";s:27:\"index.php?&feed=$matches[1]\";s:27:\"(feed|rdf|rss|rss2|atom)/?$\";s:27:\"index.php?&feed=$matches[1]\";s:8:\"embed/?$\";s:21:\"index.php?&embed=true\";s:20:\"page/?([0-9]{1,})/?$\";s:28:\"index.php?&paged=$matches[1]\";s:41:\"comments/feed/(feed|rdf|rss|rss2|atom)/?$\";s:42:\"index.php?&feed=$matches[1]&withcomments=1\";s:36:\"comments/(feed|rdf|rss|rss2|atom)/?$\";s:42:\"index.php?&feed=$matches[1]&withcomments=1\";s:17:\"comments/embed/?$\";s:21:\"index.php?&embed=true\";s:44:\"search/(.+)/feed/(feed|rdf|rss|rss2|atom)/?$\";s:40:\"index.php?s=$matches[1]&feed=$matches[2]\";s:39:\"search/(.+)/(feed|rdf|rss|rss2|atom)/?$\";s:40:\"index.php?s=$matches[1]&feed=$matches[2]\";s:20:\"search/(.+)/embed/?$\";s:34:\"index.php?s=$matches[1]&embed=true\";s:32:\"search/(.+)/page/?([0-9]{1,})/?$\";s:41:\"index.php?s=$matches[1]&paged=$matches[2]\";s:14:\"search/(.+)/?$\";s:23:\"index.php?s=$matches[1]\";s:47:\"author/([^/]+)/feed/(feed|rdf|rss|rss2|atom)/?$\";s:50:\"index.php?author_name=$matches[1]&feed=$matches[2]\";s:42:\"author/([^/]+)/(feed|rdf|rss|rss2|atom)/?$\";s:50:\"index.php?author_name=$matches[1]&feed=$matches[2]\";s:23:\"author/([^/]+)/embed/?$\";s:44:\"index.php?author_name=$matches[1]&embed=true\";s:35:\"author/([^/]+)/page/?([0-9]{1,})/?$\";s:51:\"index.php?author_name=$matches[1]&paged=$matches[2]\";s:17:\"author/([^/]+)/?$\";s:33:\"index.php?author_name=$matches[1]\";s:69:\"([0-9]{4})/([0-9]{1,2})/([0-9]{1,2})/feed/(feed|rdf|rss|rss2|atom)/?$\";s:80:\"index.php?year=$matches[1]&monthnum=$matches[2]&day=$matches[3]&feed=$matches[4]\";s:64:\"([0-9]{4})/([0-9]{1,2})/([0-9]{1,2})/(feed|rdf|rss|rss2|atom)/?$\";s:80:\"index.php?year=$matches[1]&monthnum=$matches[2]&day=$matches[3]&feed=$matches[4]\";s:45:\"([0-9]{4})/([0-9]{1,2})/([0-9]{1,2})/embed/?$\";s:74:\"index.php?year=$matches[1]&monthnum=$matches[2]&day=$matches[3]&embed=true\";s:57:\"([0-9]{4})/([0-9]{1,2})/([0-9]{1,2})/page/?([0-9]{1,})/?$\";s:81:\"index.php?year=$matches[1]&monthnum=$matches[2]&day=$matches[3]&paged=$matches[4]\";s:39:\"([0-9]{4})/([0-9]{1,2})/([0-9]{1,2})/?$\";s:63:\"index.php?year=$matches[1]&monthnum=$matches[2]&day=$matches[3]\";s:56:\"([0-9]{4})/([0-9]{1,2})/feed/(feed|rdf|rss|rss2|atom)/?$\";s:64:\"index.php?year=$matches[1]&monthnum=$matches[2]&feed=$matches[3]\";s:51:\"([0-9]{4})/([0-9]{1,2})/(feed|rdf|rss|rss2|atom)/?$\";s:64:\"index.php?year=$matches[1]&monthnum=$matches[2]&feed=$matches[3]\";s:32:\"([0-9]{4})/([0-9]{1,2})/embed/?$\";s:58:\"index.php?year=$matches[1]&monthnum=$matches[2]&embed=true\";s:44:\"([0-9]{4})/([0-9]{1,2})/page/?([0-9]{1,})/?$\";s:65:\"index.php?year=$matches[1]&monthnum=$matches[2]&paged=$matches[3]\";s:26:\"([0-9]{4})/([0-9]{1,2})/?$\";s:47:\"index.php?year=$matches[1]&monthnum=$matches[2]\";s:43:\"([0-9]{4})/feed/(feed|rdf|rss|rss2|atom)/?$\";s:43:\"index.php?year=$matches[1]&feed=$matches[2]\";s:38:\"([0-9]{4})/(feed|rdf|rss|rss2|atom)/?$\";s:43:\"index.php?year=$matches[1]&feed=$matches[2]\";s:19:\"([0-9]{4})/embed/?$\";s:37:\"index.php?year=$matches[1]&embed=true\";s:31:\"([0-9]{4})/page/?([0-9]{1,})/?$\";s:44:\"index.php?year=$matches[1]&paged=$matches[2]\";s:13:\"([0-9]{4})/?$\";s:26:\"index.php?year=$matches[1]\";s:27:\".?.+?/attachment/([^/]+)/?$\";s:32:\"index.php?attachment=$matches[1]\";s:37:\".?.+?/attachment/([^/]+)/trackback/?$\";s:37:\"index.php?attachment=$matches[1]&tb=1\";s:57:\".?.+?/attachment/([^/]+)/feed/(feed|rdf|rss|rss2|atom)/?$\";s:49:\"index.php?attachment=$matches[1]&feed=$matches[2]\";s:52:\".?.+?/attachment/([^/]+)/(feed|rdf|rss|rss2|atom)/?$\";s:49:\"index.php?attachment=$matches[1]&feed=$matches[2]\";s:52:\".?.+?/attachment/([^/]+)/comment-page-([0-9]{1,})/?$\";s:50:\"index.php?attachment=$matches[1]&cpage=$matches[2]\";s:33:\".?.+?/attachment/([^/]+)/embed/?$\";s:43:\"index.php?attachment=$matches[1]&embed=true\";s:16:\"(.?.+?)/embed/?$\";s:41:\"index.php?pagename=$matches[1]&embed=true\";s:20:\"(.?.+?)/trackback/?$\";s:35:\"index.php?pagename=$matches[1]&tb=1\";s:40:\"(.?.+?)/feed/(feed|rdf|rss|rss2|atom)/?$\";s:47:\"index.php?pagename=$matches[1]&feed=$matches[2]\";s:35:\"(.?.+?)/(feed|rdf|rss|rss2|atom)/?$\";s:47:\"index.php?pagename=$matches[1]&feed=$matches[2]\";s:28:\"(.?.+?)/page/?([0-9]{1,})/?$\";s:48:\"index.php?pagename=$matches[1]&paged=$matches[2]\";s:35:\"(.?.+?)/comment-page-([0-9]{1,})/?$\";s:48:\"index.php?pagename=$matches[1]&cpage=$matches[2]\";s:24:\"(.?.+?)(?:/([0-9]+))?/?$\";s:47:\"index.php?pagename=$matches[1]&page=$matches[2]\";s:27:\"[^/]+/attachment/([^/]+)/?$\";s:32:\"index.php?attachment=$matches[1]\";s:37:\"[^/]+/attachment/([^/]+)/trackback/?$\";s:37:\"index.php?attachment=$matches[1]&tb=1\";s:57:\"[^/]+/attachment/([^/]+)/feed/(feed|rdf|rss|rss2|atom)/?$\";s:49:\"index.php?attachment=$matches[1]&feed=$matches[2]\";s:52:\"[^/]+/attachment/([^/]+)/(feed|rdf|rss|rss2|atom)/?$\";s:49:\"index.php?attachment=$matches[1]&feed=$matches[2]\";s:52:\"[^/]+/attachment/([^/]+)/comment-page-([0-9]{1,})/?$\";s:50:\"index.php?attachment=$matches[1]&cpage=$matches[2]\";s:33:\"[^/]+/attachment/([^/]+)/embed/?$\";s:43:\"index.php?attachment=$matches[1]&embed=true\";s:16:\"([^/]+)/embed/?$\";s:37:\"index.php?name=$matches[1]&embed=true\";s:20:\"([^/]+)/trackback/?$\";s:31:\"index.php?name=$matches[1]&tb=1\";s:40:\"([^/]+)/feed/(feed|rdf|rss|rss2|atom)/?$\";s:43:\"index.php?name=$matches[1]&feed=$matches[2]\";s:35:\"([^/]+)/(feed|rdf|rss|rss2|atom)/?$\";s:43:\"index.php?name=$matches[1]&feed=$matches[2]\";s:28:\"([^/]+)/page/?([0-9]{1,})/?$\";s:44:\"index.php?name=$matches[1]&paged=$matches[2]\";s:35:\"([^/]+)/comment-page-([0-9]{1,})/?$\";s:44:\"index.php?name=$matches[1]&cpage=$matches[2]\";s:24:\"([^/]+)(?:/([0-9]+))?/?$\";s:43:\"index.php?name=$matches[1]&page=$matches[2]\";s:16:\"[^/]+/([^/]+)/?$\";s:32:\"index.php?attachment=$matches[1]\";s:26:\"[^/]+/([^/]+)/trackback/?$\";s:37:\"index.php?attachment=$matches[1]&tb=1\";s:46:\"[^/]+/([^/]+)/feed/(feed|rdf|rss|rss2|atom)/?$\";s:49:\"index.php?attachment=$matches[1]&feed=$matches[2]\";s:41:\"[^/]+/([^/]+)/(feed|rdf|rss|rss2|atom)/?$\";s:49:\"index.php?attachment=$matches[1]&feed=$matches[2]\";s:41:\"[^/]+/([^/]+)/comment-page-([0-9]{1,})/?$\";s:50:\"index.php?attachment=$matches[1]&cpage=$matches[2]\";s:22:\"[^/]+/([^/]+)/embed/?$\";s:43:\"index.php?attachment=$matches[1]&embed=true\";}`,
+		t: "array",
+		v: `[` +
+			`\"^wp-json/?$\"=>\"index.php?rest_route=/\",` +
+			`\"^wp-json/(.*)?\"=>\"index.php?rest_route=/$matches[1]\",` +
+			`\"^index.php/wp-json/?$\"=>\"index.php?rest_route=/\",` +
+			`\"^index.php/wp-json/(.*)?\"=>\"index.php?rest_route=/$matches[1]\",` +
+			`\"^wp-sitemap\\.xml$\"=>\"index.php?sitemap=index\",` +
+			`\"^wp-sitemap\\.xsl$\"=>\"index.php?sitemap-stylesheet=sitemap\",` +
+			`\"^wp-sitemap-index\\.xsl$\"=>\"index.php?sitemap-stylesheet=index\",` +
+			`\"^wp-sitemap-([a-z]+?)-([a-z\\d_-]+?)-(\\d+?)\\.xml$\"=>\"index.php?sitemap=$matches[1]&sitemap-subtype=$matches[2]&paged=$matches[3]\",` +
+			`\"^wp-sitemap-([a-z]+?)-(\\d+?)\\.xml$\"=>\"index.php?sitemap=$matches[1]&paged=$matches[2]\",` +
+			`\"category/(.+?)/feed/(feed|rdf|rss|rss2|atom)/?$\"=>\"index.php?category_name=$matches[1]&feed=$matches[2]\",` +
+			`\"category/(.+?)/(feed|rdf|rss|rss2|atom)/?$\"=>\"index.php?category_name=$matches[1]&feed=$matches[2]\",` +
+			`\"category/(.+?)/embed/?$\"=>\"index.php?category_name=$matches[1]&embed=true\",` +
+			`\"category/(.+?)/page/?([0-9]{1,})/?$\"=>\"index.php?category_name=$matches[1]&paged=$matches[2]\",` +
+			`\"category/(.+?)/?$\"=>\"index.php?category_name=$matches[1]\",` +
+			`\"tag/([^/]+)/feed/(feed|rdf|rss|rss2|atom)/?$\"=>\"index.php?tag=$matches[1]&feed=$matches[2]\",` +
+			`\"tag/([^/]+)/(feed|rdf|rss|rss2|atom)/?$\"=>\"index.php?tag=$matches[1]&feed=$matches[2]\",` +
+			`\"tag/([^/]+)/embed/?$\"=>\"index.php?tag=$matches[1]&embed=true\",` +
+			`\"tag/([^/]+)/page/?([0-9]{1,})/?$\"=>\"index.php?tag=$matches[1]&paged=$matches[2]\",` +
+			`\"tag/([^/]+)/?$\"=>\"index.php?tag=$matches[1]\",` +
+			`\"type/([^/]+)/feed/(feed|rdf|rss|rss2|atom)/?$\"=>\"index.php?post_format=$matches[1]&feed=$matches[2]\",` +
+			`\"type/([^/]+)/(feed|rdf|rss|rss2|atom)/?$\"=>\"index.php?post_format=$matches[1]&feed=$matches[2]\",` +
+			`\"type/([^/]+)/embed/?$\"=>\"index.php?post_format=$matches[1]&embed=true\",` +
+			`\"type/([^/]+)/page/?([0-9]{1,})/?$\"=>\"index.php?post_format=$matches[1]&paged=$matches[2]\",` +
+			`\"type/([^/]+)/?$\"=>\"index.php?post_format=$matches[1]\",` +
+			`\"robots\\.txt$\"=>\"index.php?robots=1\",` +
+			`\"favicon\\.ico$\"=>\"index.php?favicon=1\",` +
+			`\".*wp-(atom|rdf|rss|rss2|feed|commentsrss2)\\.php$\"=>\"index.php?feed=old\",` +
+			`\".*wp-app\\.php(/.*)?$\"=>\"index.php?error=403\",` +
+			`\".*wp-register.php$\"=>\"index.php?register=true\",` +
+			`\"feed/(feed|rdf|rss|rss2|atom)/?$\"=>\"index.php?&feed=$matches[1]\",` +
+			`\"(feed|rdf|rss|rss2|atom)/?$\"=>\"index.php?&feed=$matches[1]\",` +
+			`\"embed/?$\"=>\"index.php?&embed=true\",` +
+			`\"page/?([0-9]{1,})/?$\"=>\"index.php?&paged=$matches[1]\",` +
+			`\"comments/feed/(feed|rdf|rss|rss2|atom)/?$\"=>\"index.php?&feed=$matches[1]&withcomments=1\",` +
+			`\"comments/(feed|rdf|rss|rss2|atom)/?$\"=>\"index.php?&feed=$matches[1]&withcomments=1\",` +
+			`\"comments/embed/?$\"=>\"index.php?&embed=true\",` +
+			`\"search/(.+)/feed/(feed|rdf|rss|rss2|atom)/?$\"=>\"index.php?s=$matches[1]&feed=$matches[2]\",` +
+			`\"search/(.+)/(feed|rdf|rss|rss2|atom)/?$\"=>\"index.php?s=$matches[1]&feed=$matches[2]\",` +
+			`\"search/(.+)/embed/?$\"=>\"index.php?s=$matches[1]&embed=true\",` +
+			`\"search/(.+)/page/?([0-9]{1,})/?$\"=>\"index.php?s=$matches[1]&paged=$matches[2]\",` +
+			`\"search/(.+)/?$\"=>\"index.php?s=$matches[1]\",` +
+			`\"author/([^/]+)/feed/(feed|rdf|rss|rss2|atom)/?$\"=>\"index.php?author_name=$matches[1]&feed=$matches[2]\",` +
+			`\"author/([^/]+)/(feed|rdf|rss|rss2|atom)/?$\"=>\"index.php?author_name=$matches[1]&feed=$matches[2]\",` +
+			`\"author/([^/]+)/embed/?$\"=>\"index.php?author_name=$matches[1]&embed=true\",` +
+			`\"author/([^/]+)/page/?([0-9]{1,})/?$\"=>\"index.php?author_name=$matches[1]&paged=$matches[2]\",` +
+			`\"author/([^/]+)/?$\"=>\"index.php?author_name=$matches[1]\",` +
+			`\"([0-9]{4})/([0-9]{1,2})/([0-9]{1,2})/feed/(feed|rdf|rss|rss2|atom)/?$\"=>\"index.php?year=$matches[1]&monthnum=$matches[2]&day=$matches[3]&feed=$matches[4]\",` +
+			`\"([0-9]{4})/([0-9]{1,2})/([0-9]{1,2})/(feed|rdf|rss|rss2|atom)/?$\"=>\"index.php?year=$matches[1]&monthnum=$matches[2]&day=$matches[3]&feed=$matches[4]\",` +
+			`\"([0-9]{4})/([0-9]{1,2})/([0-9]{1,2})/embed/?$\"=>\"index.php?year=$matches[1]&monthnum=$matches[2]&day=$matches[3]&embed=true\",` +
+			`\"([0-9]{4})/([0-9]{1,2})/([0-9]{1,2})/page/?([0-9]{1,})/?$\"=>\"index.php?year=$matches[1]&monthnum=$matches[2]&day=$matches[3]&paged=$matches[4]\",` +
+			`\"([0-9]{4})/([0-9]{1,2})/([0-9]{1,2})/?$\"=>\"index.php?year=$matches[1]&monthnum=$matches[2]&day=$matches[3]\",` +
+			`\"([0-9]{4})/([0-9]{1,2})/feed/(feed|rdf|rss|rss2|atom)/?$\"=>\"index.php?year=$matches[1]&monthnum=$matches[2]&feed=$matches[3]\",` +
+			`\"([0-9]{4})/([0-9]{1,2})/(feed|rdf|rss|rss2|atom)/?$\"=>\"index.php?year=$matches[1]&monthnum=$matches[2]&feed=$matches[3]\",` +
+			`\"([0-9]{4})/([0-9]{1,2})/embed/?$\"=>\"index.php?year=$matches[1]&monthnum=$matches[2]&embed=true\",` +
+			`\"([0-9]{4})/([0-9]{1,2})/page/?([0-9]{1,})/?$\"=>\"index.php?year=$matches[1]&monthnum=$matches[2]&paged=$matches[3]\",` +
+			`\"([0-9]{4})/([0-9]{1,2})/?$\"=>\"index.php?year=$matches[1]&monthnum=$matches[2]\",` +
+			`\"([0-9]{4})/feed/(feed|rdf|rss|rss2|atom)/?$\"=>\"index.php?year=$matches[1]&feed=$matches[2]\",` +
+			`\"([0-9]{4})/(feed|rdf|rss|rss2|atom)/?$\"=>\"index.php?year=$matches[1]&feed=$matches[2]\",` +
+			`\"([0-9]{4})/embed/?$\"=>\"index.php?year=$matches[1]&embed=true\",` +
+			`\"([0-9]{4})/page/?([0-9]{1,})/?$\"=>\"index.php?year=$matches[1]&paged=$matches[2]\",` +
+			`\"([0-9]{4})/?$\"=>\"index.php?year=$matches[1]\",` +
+			`\".?.+?/attachment/([^/]+)/?$\"=>\"index.php?attachment=$matches[1]\",` +
+			`\".?.+?/attachment/([^/]+)/trackback/?$\"=>\"index.php?attachment=$matches[1]&tb=1\",` +
+			`\".?.+?/attachment/([^/]+)/feed/(feed|rdf|rss|rss2|atom)/?$\"=>\"index.php?attachment=$matches[1]&feed=$matches[2]\",` +
+			`\".?.+?/attachment/([^/]+)/(feed|rdf|rss|rss2|atom)/?$\"=>\"index.php?attachment=$matches[1]&feed=$matches[2]\",` +
+			`\".?.+?/attachment/([^/]+)/comment-page-([0-9]{1,})/?$\"=>\"index.php?attachment=$matches[1]&cpage=$matches[2]\",` +
+			`\".?.+?/attachment/([^/]+)/embed/?$\"=>\"index.php?attachment=$matches[1]&embed=true\",` +
+			`\"(.?.+?)/embed/?$\"=>\"index.php?pagename=$matches[1]&embed=true\",` +
+			`\"(.?.+?)/trackback/?$\"=>\"index.php?pagename=$matches[1]&tb=1\",` +
+			`\"(.?.+?)/feed/(feed|rdf|rss|rss2|atom)/?$\"=>\"index.php?pagename=$matches[1]&feed=$matches[2]\",` +
+			`\"(.?.+?)/(feed|rdf|rss|rss2|atom)/?$\"=>\"index.php?pagename=$matches[1]&feed=$matches[2]\",` +
+			`\"(.?.+?)/page/?([0-9]{1,})/?$\"=>\"index.php?pagename=$matches[1]&paged=$matches[2]\",` +
+			`\"(.?.+?)/comment-page-([0-9]{1,})/?$\"=>\"index.php?pagename=$matches[1]&cpage=$matches[2]\",` +
+			`\"(.?.+?)(?:/([0-9]+))?/?$\"=>\"index.php?pagename=$matches[1]&page=$matches[2]\",` +
+			`\"[^/]+/attachment/([^/]+)/?$\"=>\"index.php?attachment=$matches[1]\",` +
+			`\"[^/]+/attachment/([^/]+)/trackback/?$\"=>\"index.php?attachment=$matches[1]&tb=1\",` +
+			`\"[^/]+/attachment/([^/]+)/feed/(feed|rdf|rss|rss2|atom)/?$\"=>\"index.php?attachment=$matches[1]&feed=$matches[2]\",` +
+			`\"[^/]+/attachment/([^/]+)/(feed|rdf|rss|rss2|atom)/?$\"=>\"index.php?attachment=$matches[1]&feed=$matches[2]\",` +
+			`\"[^/]+/attachment/([^/]+)/comment-page-([0-9]{1,})/?$\"=>\"index.php?attachment=$matches[1]&cpage=$matches[2]\",` +
+			`\"[^/]+/attachment/([^/]+)/embed/?$\"=>\"index.php?attachment=$matches[1]&embed=true\",` +
+			`\"([^/]+)/embed/?$\"=>\"index.php?name=$matches[1]&embed=true\",` +
+			`\"([^/]+)/trackback/?$\"=>\"index.php?name=$matches[1]&tb=1\",` +
+			`\"([^/]+)/feed/(feed|rdf|rss|rss2|atom)/?$\"=>\"index.php?name=$matches[1]&feed=$matches[2]\",` +
+			`\"([^/]+)/(feed|rdf|rss|rss2|atom)/?$\"=>\"index.php?name=$matches[1]&feed=$matches[2]\",` +
+			`\"([^/]+)/page/?([0-9]{1,})/?$\"=>\"index.php?name=$matches[1]&paged=$matches[2]\",` +
+			`\"([^/]+)/comment-page-([0-9]{1,})/?$\"=>\"index.php?name=$matches[1]&cpage=$matches[2]\",` +
+			`\"([^/]+)(?:/([0-9]+))?/?$\"=>\"index.php?name=$matches[1]&page=$matches[2]\",` +
+			`\"[^/]+/([^/]+)/?$\"=>\"index.php?attachment=$matches[1]\",` +
+			`\"[^/]+/([^/]+)/trackback/?$\"=>\"index.php?attachment=$matches[1]&tb=1\",` +
+			`\"[^/]+/([^/]+)/feed/(feed|rdf|rss|rss2|atom)/?$\"=>\"index.php?attachment=$matches[1]&feed=$matches[2]\",` +
+			`\"[^/]+/([^/]+)/(feed|rdf|rss|rss2|atom)/?$\"=>\"index.php?attachment=$matches[1]&feed=$matches[2]\",` +
+			`\"[^/]+/([^/]+)/comment-page-([0-9]{1,})/?$\"=>\"index.php?attachment=$matches[1]&cpage=$matches[2]\",` +
+			`\"[^/]+/([^/]+)/embed/?$\"=>\"index.php?attachment=$matches[1]&embed=true\"` +
+			`]`,
+	},
+	{
 		n: "Object: Foo",
 		f: phpcereal.ObjectTypeFlag,
 		s: `O:3:"Foo":3:{s:3:"foo";s:3:"abc";s:8:"\0Foo\0bar";i:13;s:6:"\0*\0baz";b:1;}`,

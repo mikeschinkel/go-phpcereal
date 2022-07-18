@@ -51,11 +51,11 @@ func unescapedLength(value string) int {
 	escaped := false
 	for i := length - 1; i >= 0; i-- {
 		if value[i] == '\\' {
-			if escaped {
-				continue
+			if !escaped {
+				length--
+				escaped = true
 			}
-			length--
-			escaped = true
+			continue
 		}
 		escaped = false
 	}
