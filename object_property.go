@@ -118,7 +118,7 @@ func (prop *ObjectProperty) Parse(p *Parser) {
 	}
 	prop.Value = pf(p)
 	if p.Err != nil {
-		p.Err = fmt.Errorf("error parsing array value; %w", p.Err)
+		p.Err = fmt.Errorf("error parsing property '%s' value; %w", prop.name, p.Err)
 		goto end
 	}
 end:

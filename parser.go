@@ -168,8 +168,9 @@ end:
 
 func (p *Parser) EatQuotedString(length int, quote rune, quotesEscaped ...bool) (bytes []byte) {
 	var inEsc bool
-	var quotePos int
+	var strEnd int
 	var qe bool
+	var hasEndEsc bool
 
 	start := p.Bytes
 
@@ -181,7 +182,7 @@ func (p *Parser) EatQuotedString(length int, quote rune, quotesEscaped ...bool) 
 	if len(quotesEscaped) > 0 {
 		qe = quotesEscaped[0]
 	}
-	quotePos = length + 1
+	strEnd = length + 1
 	for {
 		count += p.advance()
 		if p.Err != nil {
@@ -190,30 +191,55 @@ func (p *Parser) EatQuotedString(length int, quote rune, quotesEscaped ...bool) 
 		switch {
 		case p.LastRune == quote:
 			switch {
-			case count == quotePos:
+			case inEsc:
+				inEsc = false
+				// Subtract 1 to get rid of `"` from the end of the string
+				if hasEndEsc && count+1 == strEnd {
+					goto end
+				}
+				count--
+				if count+1 == strEnd {
+					goto end
+				}
+				if count == strEnd {
+					goto end
+				}
+
+			case count == strEnd:
 				if quote != CloseBrace {
 					if qe && !inEsc {
 						p.Err = fmt.Errorf("quote found at %d when backslash was expected: %s",
-							quotePos, leftTrunc(start, count))
+							strEnd, leftTrunc(start, count))
 						goto end
 					}
 					count--
 				}
 				goto end
+
 			case p.PeekNext() == quote:
 				if CloseBrace != quote {
 					// CloseBrace occurs in Custom Object
-					quotePos++
+					strEnd++
 				}
 				continue
 			}
-			//			inQuote = false
-			inEsc = false
 
 		case inEsc:
 			switch p.LastRune {
 			case BackSlash, 'a', 'e', 'f', 'n', 'r', 'R', 't':
 				print("")
+				switch {
+				// For an escaped value at end of escaped string
+				case p.Escaped && count+1 == strEnd:
+					count--
+					hasEndEsc = true
+
+				// For an escaped value at end of non-escaped string
+				case !p.Escaped && count == strEnd:
+					count--
+					hasEndEsc = true
+
+				}
 			case 'c', 'p', 'P', 'x', '0':
 				_, _ = p.EatEscapeSequence(p.LastRune)
 				// Need to set count
@@ -222,18 +248,23 @@ func (p *Parser) EatQuotedString(length int, quote rune, quotesEscaped ...bool) 
 
 		case p.LastRune == BackSlash:
 			inEsc = true
-			if count == quotePos {
+			switch {
+			case count == strEnd:
 				if !qe {
 					p.Err = fmt.Errorf("backslash found at %d when quote was expected: %s",
-						quotePos, leftTrunc(start, count))
+						strEnd, leftTrunc(start, count))
 					goto end
 				}
-				count--
-			} else {
-				quotePos++
+				if hasEndEsc {
+					count -= 2
+				} else {
+					count--
+				}
+			default:
+				strEnd++
 			}
-			inEsc = true
-		case count >= quotePos:
+
+		case count >= strEnd:
 			count--
 			goto end
 
@@ -246,6 +277,9 @@ func (p *Parser) EatQuotedString(length int, quote rune, quotesEscaped ...bool) 
 	}
 end:
 	if p.Err == nil && 0 < count {
+		if hasEndEsc {
+			count--
+		}
 		bytes = make([]byte, count)
 		copy(bytes, start[:count])
 	}

@@ -116,7 +116,7 @@ func (v ArrayValue) Parse(p *Parser) (_ CerealValue) {
 			}
 			element.Key = pf(p)
 			if p.Err != nil {
-				p.Err = fmt.Errorf("error parsing array key #%d; %w", index, p.Err)
+				p.Err = fmt.Errorf("error parsing array key #%d; %w", index+1, p.Err)
 				goto end
 			}
 			pf, err = p.GetParseFunc(p.EatTypeFlag())
@@ -126,7 +126,10 @@ func (v ArrayValue) Parse(p *Parser) (_ CerealValue) {
 			}
 			element.Value = pf(p)
 			if p.Err != nil {
-				p.Err = fmt.Errorf("error parsing array value #%d; %w", index, p.Err)
+				p.Err = fmt.Errorf("error parsing value for array key '%s' [element #%d]; %w",
+					element.Key,
+					index+1,
+					p.Err)
 				goto end
 			}
 			elements[index] = element

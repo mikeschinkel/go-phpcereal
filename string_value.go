@@ -61,11 +61,16 @@ func (v *StringValue) SetEscaped(e bool) {
 }
 
 func (v StringValue) String() string {
-	var pattern = `"%s"`
+	var pattern string
+	var value string
 	if v.escaped {
 		pattern = `\"%s\"`
+		value = v.getEscapedValue()
+	} else {
+		pattern = `"%s"`
+		value = v.Value
 	}
-	return fmt.Sprintf(pattern, v.getEscapedValue())
+	return fmt.Sprintf(pattern, value)
 }
 
 func (v *StringValue) getEscapedValue() string {
@@ -79,16 +84,20 @@ func (v *StringValue) getEscapedValue() string {
 }
 
 func (v StringValue) Serialized() string {
+	var value string
 	var pattern string
 	if v.escaped {
+		value = v.getEscapedValue()
 		pattern = `%c:%d:\"%s\";`
 	} else {
+		value = v.Value
 		pattern = `%c:%d:"%s";`
 	}
 	return fmt.Sprintf(pattern,
 		byte(v.GetTypeFlag()),
 		unescapedLength(v.Value),
-		v.getEscapedValue())
+		value,
+	)
 }
 
 func (v StringValue) SerializedLen() int {

@@ -169,8 +169,8 @@ func (v ObjectValue) Parse(p *Parser) (_ CerealValue) {
 			prop.SetEscaped(v.escaped)
 			prop.Parse(p)
 			if p.Err != nil {
-				p.Err = fmt.Errorf("error parsing property #%d of class %s; %w",
-					index, v.Value.ClassName, p.Err)
+				p.Err = fmt.Errorf("error parsing property '%s' [#%d] of class %s; %w",
+					prop.GetName(), index+1, v.Value.ClassName, p.Err)
 				goto end
 			}
 			props[index] = prop
