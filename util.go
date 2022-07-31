@@ -46,14 +46,22 @@ func leftTrunc[C Chars](s C, n int) string {
 	return _s[:n]
 }
 
-func unescapedLength(value string) int {
+func unescapedLength(value string, opts ...CerealOpts) int {
 	length := len(value)
+	lastEle := length - 1
 	escaped := false
-	for i := length - 1; i >= 0; i-- {
+	if opts == nil {
+		opts = make([]CerealOpts, 1)
+	}
+	for i := lastEle; i >= 0; i-- {
 		if value[i] == '\\' {
 			if !escaped {
 				length--
 				escaped = true
+			}
+			if i < lastEle && value[i+1] == 'r' && !opts[0].CountCR {
+				length--
+				escaped = false
 			}
 			continue
 		}

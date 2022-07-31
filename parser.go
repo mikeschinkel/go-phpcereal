@@ -8,7 +8,8 @@ import (
 )
 
 type Parser struct {
-	Escaped  bool
+	opts     CerealOpts
+	CountCR  bool // Count Carriage Return
 	Head     []byte
 	Bytes    []byte
 	Type     TypeFlag
@@ -23,6 +24,13 @@ func NewParser[C Chars](s C) *Parser {
 		Head:  b,
 		Bytes: b,
 	}
+}
+
+func (p *Parser) GetOpts() CerealOpts {
+	return p.opts
+}
+func (p *Parser) SetOpts(opts CerealOpts) {
+	p.opts = opts
 }
 
 func (p *Parser) EatNext() rune {
@@ -141,7 +149,7 @@ func (p *Parser) handleZeroLengthString(quote rune) (err error) {
 	if err != nil {
 		goto end
 	}
-	if p.Escaped {
+	if p.opts.Escaped {
 		if p.LastRune != BackSlash {
 			err = fmt.Errorf("expected an escaping backslash, got %q", p.LastRune)
 			goto end
@@ -170,6 +178,7 @@ func (p *Parser) EatQuotedString(length int, quote rune, quotesEscaped ...bool) 
 	var inEsc bool
 	var strEnd int
 	var qe bool
+	var crCount = 0
 	var hasEndEsc bool
 
 	start := p.Bytes
@@ -182,6 +191,7 @@ func (p *Parser) EatQuotedString(length int, quote rune, quotesEscaped ...bool) 
 	if len(quotesEscaped) > 0 {
 		qe = quotesEscaped[0]
 	}
+	// Add 1 to account for closing quote
 	strEnd = length + 1
 	for {
 		count += p.advance()
@@ -193,11 +203,15 @@ func (p *Parser) EatQuotedString(length int, quote rune, quotesEscaped ...bool) 
 			switch {
 			case inEsc:
 				inEsc = false
-				// Subtract 1 to get rid of `"` from the end of the string
 				if hasEndEsc && count+1 == strEnd {
+					// Counteract the final count-- below
+					count++
 					goto end
 				}
-				count--
+				if strEnd <= count+2 {
+					// Subtract 1 to get rid of `"` from the end of the string
+					count--
+				}
 				if count+1 == strEnd {
 					goto end
 				}
@@ -226,23 +240,28 @@ func (p *Parser) EatQuotedString(length int, quote rune, quotesEscaped ...bool) 
 
 		case inEsc:
 			switch p.LastRune {
-			case BackSlash, 'a', 'e', 'f', 'n', 'r', 'R', 't':
+			case BackSlash, 'a', 'e', 'f', 'n', 'R', 't':
 				print("")
 				switch {
 				// For an escaped value at end of escaped string
-				case p.Escaped && count+1 == strEnd:
-					count--
-					hasEndEsc = true
-
-				// For an escaped value at end of non-escaped string
-				case !p.Escaped && count == strEnd:
-					count--
+				// Or for an escaped value at end of non-escaped string
+				case p.opts.Escaped && count+1 == strEnd, !p.opts.Escaped && count == strEnd:
 					hasEndEsc = true
 
 				}
+
+			case 'r':
+				if !p.opts.CountCR {
+					// Ignore carriage returns which Adminer adds (e.g. '\r\n') where for
+					// the same file mysqldump outputs '\n' for serializations that were
+					// created with \n so the string length does not include the \r.
+					strEnd++
+					crCount++
+				}
+
 			case 'c', 'p', 'P', 'x', '0':
 				_, _ = p.EatEscapeSequence(p.LastRune)
-				// Need to set count
+
 			}
 			inEsc = false
 
@@ -264,8 +283,9 @@ func (p *Parser) EatQuotedString(length int, quote rune, quotesEscaped ...bool) 
 				strEnd++
 			}
 
-		case count >= strEnd:
-			count--
+		//case count >= strEnd:
+		case count > strEnd:
+			//			count--
 			goto end
 
 		default:
@@ -394,47 +414,47 @@ func (p *Parser) GetParseFunc(tf TypeFlag) (pf ParseFunc, err error) {
 	switch tf {
 	case ArrayTypeFlag:
 		pf = func(p *Parser) CerealValue {
-			return ArrayValue{escaped: p.Escaped}.Parse(p)
+			return ArrayValue{opts: p.GetOpts()}.Parse(p)
 		}
 
 	case NULLTypeFlag:
 		pf = func(p *Parser) CerealValue {
-			return NullValue{escaped: p.Escaped}.Parse(p)
+			return NullValue{opts: p.GetOpts()}.Parse(p)
 		}
 
 	case StringTypeFlag:
 		pf = func(p *Parser) CerealValue {
-			return StringValue{escaped: p.Escaped}.Parse(p)
+			return StringValue{opts: p.GetOpts()}.Parse(p)
 		}
 
 	case PHP6StringTypeFlag:
 		pf = func(p *Parser) CerealValue {
-			return StringValue{escaped: p.Escaped}.Parse(p)
+			return StringValue{opts: p.GetOpts()}.Parse(p)
 		}
 
 	case BoolTypeFlag:
 		pf = func(p *Parser) CerealValue {
-			return BoolValue{escaped: p.Escaped}.Parse(p)
+			return BoolValue{opts: p.GetOpts()}.Parse(p)
 		}
 
 	case IntTypeFlag:
 		pf = func(p *Parser) CerealValue {
-			return IntValue{escaped: p.Escaped}.Parse(p)
+			return IntValue{opts: p.GetOpts()}.Parse(p)
 		}
 
 	case FloatTypeFlag:
 		pf = func(p *Parser) CerealValue {
-			return FloatValue{escaped: p.Escaped}.Parse(p)
+			return FloatValue{opts: p.GetOpts()}.Parse(p)
 		}
 
 	case ObjectTypeFlag:
 		pf = func(p *Parser) CerealValue {
-			return ObjectValue{escaped: p.Escaped}.Parse(p)
+			return ObjectValue{opts: p.GetOpts()}.Parse(p)
 		}
 
 	case CustomObjectTypeFlag:
 		pf = func(p *Parser) CerealValue {
-			ov := ObjectValue{escaped: p.Escaped}
+			ov := ObjectValue{opts: p.GetOpts()}
 			return CustomObjectValue{ObjectValue: ov}.Parse(p)
 		}
 

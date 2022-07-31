@@ -7,11 +7,19 @@ import (
 var _ CerealValue = (*FloatValue)(nil)
 
 type FloatValue struct {
-	escaped      bool
+	opts         CerealOpts
 	Integer      int
 	Fraction     int
 	omitFraction bool
 	serializing  bool
+}
+
+func (v FloatValue) GetOpts() CerealOpts {
+	return v.opts
+}
+
+func (v FloatValue) SetOpts(opts CerealOpts) {
+	v.opts = opts
 }
 
 func (v FloatValue) GetValue() interface{} {
@@ -27,11 +35,11 @@ func (v FloatValue) GetTypeFlag() TypeFlag {
 }
 
 func (v FloatValue) GetEscaped() bool {
-	return v.escaped
+	return v.opts.Escaped
 }
 
 func (v *FloatValue) SetEscaped(e bool) {
-	v.escaped = e
+	v.opts.Escaped = e
 }
 
 func (v FloatValue) String() string {

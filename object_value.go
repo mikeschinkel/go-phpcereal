@@ -11,12 +11,19 @@ var _ CerealValue = (*ObjectValue)(nil)
 var _ StringReplacer = (*ObjectValue)(nil)
 
 type ObjectValue struct {
+	opts     CerealOpts
 	escaped  bool
 	Value    Object
 	LenBytes []byte // Array Length but as []byte vs. int
 	bytes    []byte
 }
 
+func (v ObjectValue) GetOpts() CerealOpts {
+	return v.opts
+}
+func (v ObjectValue) SetOpts(opts CerealOpts) {
+	v.opts = opts
+}
 func (v ObjectValue) ReplaceString(from, to string, times int) {
 	v.Value.ReplaceString(from, to, times)
 	v.bytes = nil
@@ -39,12 +46,12 @@ func (v ObjectValue) String() string {
 }
 
 func (v ObjectValue) GetEscaped() bool {
-	return v.escaped
+	return v.opts.Escaped
 }
 
 func (v *ObjectValue) SetEscaped(e bool) {
-	if v.escaped != e {
-		v.escaped = e
+	if v.GetEscaped() != e {
+		v.opts.Escaped = e
 		v.bytes = nil
 	}
 }
@@ -63,7 +70,7 @@ func (v *ObjectValue) BytesSet() bool {
 
 func (v ObjectValue) Serialized() string {
 	writeQuote := func(parts *strings.Builder) {
-		if v.escaped {
+		if v.GetEscaped() {
 			parts.WriteString(`\"`)
 		} else {
 			parts.WriteByte('"')
@@ -97,7 +104,7 @@ func (v ObjectValue) Serialized() string {
 }
 
 func (v ObjectValue) SerializedLen() (length int) {
-	return unescapedLength(v.Serialized())
+	return unescapedLength(v.Serialized(), v.opts)
 }
 
 func (v *ObjectValue) ParseHeader(p *Parser) (length int, lenBytes []byte) {
@@ -112,7 +119,7 @@ func (v *ObjectValue) ParseHeader(p *Parser) (length int, lenBytes []byte) {
 	}
 
 	r = p.EatNext()
-	if v.escaped {
+	if v.GetEscaped() {
 		if r != BackSlash {
 			p.Err = fmt.Errorf("expected backslash to escape quoted class name, got %q", r)
 			goto end
@@ -125,7 +132,7 @@ func (v *ObjectValue) ParseHeader(p *Parser) (length int, lenBytes []byte) {
 		goto end
 	}
 
-	nameBytes = p.EatQuotedString(nameLen, DoubleQuote, v.escaped)
+	nameBytes = p.EatQuotedString(nameLen, DoubleQuote, v.GetEscaped())
 	if nameBytes == nil {
 		p.Err = errors.New("error; empty object class name")
 		goto end
@@ -166,7 +173,7 @@ func (v ObjectValue) Parse(p *Parser) (_ CerealValue) {
 		v.bytes = nil
 		props = make(ObjectProperties, length)
 		for index, prop := range props {
-			prop.SetEscaped(v.escaped)
+			prop.SetEscaped(v.GetEscaped())
 			prop.Parse(p)
 			if p.Err != nil {
 				p.Err = fmt.Errorf("error parsing property '%s' [#%d] of class %s; %w",

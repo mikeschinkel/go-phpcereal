@@ -31,18 +31,18 @@ func (c *CustomObjectValue) Serialized() string {
 		builder.WriteByte(':')
 		name := string(c.Value.ClassName)
 		builder.WriteString(strconv.Itoa(len(name)))
-		if c.escaped {
+		if c.GetEscaped() {
 			builder.WriteString(`:\"`)
 		} else {
 			builder.WriteString(`:"`)
 		}
 		builder.WriteString(name)
-		if c.escaped {
+		if c.GetEscaped() {
 			builder.WriteString(`\":`)
 		} else {
 			builder.WriteString(`":`)
 		}
-		c.ArrayValue.SetEscaped(c.escaped)
+		c.ArrayValue.SetOpts(c.GetOpts())
 		builderWriteInt(&builder, c.ArrayValue.SerializedLen())
 		builder.WriteString(":{")
 		builder.WriteString(c.ArrayValue.Serialized())
@@ -53,7 +53,7 @@ func (c *CustomObjectValue) Serialized() string {
 }
 
 func (c CustomObjectValue) SerializedLen() int {
-	return unescapedLength(c.Serialized())
+	return unescapedLength(c.Serialized(), c.opts)
 }
 
 func (c CustomObjectValue) Parse(p *Parser) (_ CerealValue) {
@@ -75,13 +75,13 @@ func (c CustomObjectValue) Parse(p *Parser) (_ CerealValue) {
 		goto end
 	}
 
-	arrBytes = p.EatQuotedString(length, CloseBrace, p.Escaped)
+	arrBytes = p.EatQuotedString(length, CloseBrace, p.opts.Escaped)
 	if p.Err != nil || len(arrBytes) == 0 {
 		p.Err = fmt.Errorf("error parsing custom object array as string; %w", p.Err)
 		goto end
 	}
 	ap = NewParser(arrBytes)
-	ap.Escaped = p.Escaped
+	ap.SetOpts(p.GetOpts())
 	cv, err = ap.Parse()
 	if err != nil {
 		p.Err = fmt.Errorf("error parsing custom object array; %w", err)

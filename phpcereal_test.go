@@ -14,41 +14,136 @@ import (
 //)
 
 type TestData struct {
-	n string             // Test Name
-	f phpcereal.TypeFlag // Type Flag
-	e bool               // escaped
-	s string             // Serialized String
-	v string             // Go Value
-	t string             // PHP Type
-	r []string           // Find/Replace strings
+	n  string             // Test Name
+	f  phpcereal.TypeFlag // Type Flag
+	e  bool               // escaped
+	s  string             // Serialized String
+	v  string             // Go Value
+	t  string             // PHP Type
+	r  []string           // Find/Replace strings
+	i  bool               // Ignore string compare
+	cr bool               // Count carriage Return
 }
 
 func (test TestData) IsCereal() bool {
-	if test.e {
-		return phpcereal.IsEscapedCereal(test.s)
-	}
-	return phpcereal.IsCereal(test.s)
+	return phpcereal.IsCerealWithOpts(test.s, phpcereal.CerealOpts{
+		Escaped: test.e,
+		CountCR: test.cr,
+	})
 }
 
 var testdata = []TestData{
 	{
+		n: "Object Properties of enquoted string with embedded quotes",
+		f: phpcereal.ObjectTypeFlag,
+		e: true,
+		s: `O:8:\"stdClass\":1:{s:4:\"full\";O:8:\"stdClass\":1:{s:6:\"author\";s:51:\"<a href=\"https://www.themepunch.com\">ThemePunch</a>\";}}`,
+		t: "stdClass",
+		v: `stdClass{full:stdClass{author:\"<a href=\"https://www.themepunch.com\">ThemePunch</a>\"}}`,
+	},
+	{
+		n: "Empty String Property",
+		f: phpcereal.ObjectTypeFlag,
+		t: "stdClass",
+		e: true,
+		s: `O:8:\"stdClass\":1:{s:3:\"foo\";s:0:\"\";}`,
+		v: `stdClass{foo:\"\"}`,
+	},
+	{
+		n: "Escaped Custom Object",
+		f: phpcereal.CustomObjectTypeFlag,
+		t: "WPSEO_Sitemap_Cache_Data",
+		e: true,
+		s: `C:24:\"WPSEO_Sitemap_Cache_Data\":583:{` +
+			`a:2:{s:6:\"status\";s:2:\"ok\";s:3:\"xml\";s:536:\"<urlset xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ` +
+			`xmlns:image=\"http://www.google.com/schemas/sitemap-image/1.1\" xsi:schemaLocation=\"http://www.sitemaps.org/schemas/sitemap/0.9 ` +
+			`http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd http://www.google.com/schemas/sitemap-image/1.1 ` +
+			`http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd\" xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n	<url>` +
+			`\n		<loc>https://www.examples.com/category/news/</loc>\n		<lastmod>2021-09-28T23:11:41+00:00</lastmod>\n	</url>\n</urlset>\";}` +
+			`}`,
+		v: `WPSEO_Sitemap_Cache_Data[` +
+			`\"status\"=>\"ok\",` +
+			`\"xml\"=>\"<urlset xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:image=\"http://www.google.com/schemas/sitemap-image/1.1\" ` +
+			`xsi:schemaLocation=\"http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd ` +
+			`http://www.google.com/schemas/sitemap-image/1.1 http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd\" ` +
+			`xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n	<url>\n		<loc>https://www.examples.com/category/news/</loc>\n		` +
+			`<lastmod>2021-09-28T23:11:41+00:00</lastmod>\n	</url>\n</urlset>\"` +
+			`]`,
+	},
+	{
+		n: "Embedded Escaped Control Characters",
+		f: phpcereal.StringTypeFlag,
+		e: true,
+		s: `s:9:\"x\r\n	y\r\n	z\";`,
+		t: "string",
+		v: `\"x\r\n	y\r\n	z\"`,
+		cr: true,
+	},
+	{
+		n: "RevSlider Description Info Description",
+		f: phpcereal.StringTypeFlag,
+		e: true,
+		s: `s:497:\"<h4>Slider Revolution WordPress Builder Plugin</h4>\n	<p>Slider Revolution 6 is a new way to build rich & dynamic content for your websites. With our powerful visual editor, you can create modern designs in no time, and with no coding experience required.</p><p>Create Sliders & Carousels, Hero Headers, Content Modules, Full Websites, Dynamic Solutions and Special FX with our amazing Add-Ons.</p>\n	<p>200+ templates are included in our online library. Cutting edge designs. Easily customized.</p>\";`,
+		t: "string",
+		i: true,
+	},
+	{
+		n: "RevSlider Update Info Description with Slash R",
+		f: phpcereal.StringTypeFlag,
+		e: true,
+		s: `s:497:\"<h4>Slider Revolution WordPress Builder Plugin</h4>\r\n	<p>Slider Revolution 6 is a new way to build rich & dynamic content for your websites. With our powerful visual editor, you can create modern designs in no time, and with no coding experience required.</p><p>Create Sliders & Carousels, Hero Headers, Content Modules, Full Websites, Dynamic Solutions and Special FX with our amazing Add-Ons.</p>\r\n	<p>200+ templates are included in our online library. Cutting edge designs. Easily customized.</p>\";`,
+		t:  "string",
+		i:  true,
+		cr: false,
+	},
+	{
 		n: "RevSlider Update Info",
 		f: phpcereal.ObjectTypeFlag,
 		e: true,
-		s: `O:8:\"stdClass\":3:{s:7:\"checked\";i:1636591615;s:5:\"basic\";O:8:\"stdClass\":7:{s:4:\"slug\";s:9:\"revslider\";s:7:\"version\";s:5:\"6.5.9\";s:7:\"package\";s:102:\"http://updates.themepunch-ext-a.tools/revslider/download.php?code=06db9573-b0ac-49e6-ac70-c2f21893446e\";s:6:\"tested\";s:5:\"5.8.1\";s:5:\"icons\";a:1:{s:2:\"1x\";s:62:\"//updates.themepunch-ext-a.tools/revslider/logo.png?rev=6.2.23\";}s:3:\"url\";s:33:\"https://www.sliderrevolution.com/\";s:11:\"new_version\";s:5:\"6.5.9\";}s:4:\"full\";O:8:\"stdClass\":19:{s:7:\"banners\";a:2:{s:3:\"low\";s:63:\"//updates.themepunch-ext-a.tools/revslider/banner.png?rev=6.5.5\";s:4:\"high\";s:63:\"//updates.themepunch-ext-a.tools/revslider/banner.png?rev=6.5.5\";}s:4:\"name\";s:17:\"Slider Revolution\";s:4:\"slug\";s:9:\"revslider\";s:6:\"stable\";s:5:\"4.2.0\";s:7:\"version\";s:5:\"6.5.9\";s:6:\"tested\";s:5:\"5.8.1\";s:14:\"upgrade_notice\";a:0:{}s:11:\"last_update\";s:10:\"2021-10-11\";s:12:\"last_updated\";s:10:\"2021-10-11\";s:8:\"requires\";s:3:\"3.6\";s:6:\"author\";s:51:\"<a href=\"https://www.themepunch.com\">ThemePunch</a>\";s:7:\"package\";s:102:\"http://updates.themepunch-ext-a.tools/revslider/download.php?code=06db9573-b0ac-49e6-ac70-c2f21893446e\";s:13:\"download_link\";s:102:\"http://updates.themepunch-ext-a.tools/revslider/download.php?code=06db9573-b0ac-49e6-ac70-c2f21893446e\";s:9:\"file_name\";s:13:\"revslider.zip\";s:15:\"active_installs\";i:8000100;s:8:\"homepage\";s:33:\"https://www.sliderrevolution.com/\";s:8:\"sections\";a:3:{s:11:\"description\";s:53:\"<h4>Slider Revolution WordPress Builder Plugin</h4>\n\";s:9:\"changelog\";s:151:\"<p>For Slider Revolution\'s changelog, please visit <a href=\"https://www.themepunch.com/slider-revolution/changelog/\" target=\"_blank\">this</a> site!</p>\";s:3:\"faq\";s:2190:\"<div class=\"tp-faq-content\"><div class=\"tp-faq-column tp-faq-recent\"><h4>Recent Solutions</h4><ul class=\"tp-faq-recent-content ready\"><li><a href=\"https://www.youtube.com/watch?v=sCcnw5bZqYY&amp;list=PLSCdqDWVMJPPXEuOEqYEQMAsp0vAYw52_&amp;index=2&amp;t=111s\" target=\"_blank\" title=\"Video Tutorials\">Video Tutorials</a></li><li><a href=\"https://www.themepunch.com/faq/responsive-content/\" target=\"_blank\" title=\"Responsive Content Setup\">Responsive Content Setup</a></li><li><a href=\"https://www.themepunch.com/faq/video-content-mobile/\" target=\"_blank\" title=\"Video Content &amp; Mobile Considerations\">Video Content &amp; Mobile Considerations</a></li><li><a href=\"https://www.themepunch.com/faq/how-to-change-the-timing-of-slides/\" target=\"_blank\" title=\"How to change the timing of Slides\">How to change the timing of Slides</a></li><li><a href=\"https://www.themepunch.com/faq/mouse-hovers-for-layer-content/\" target=\"_blank\" title=\"Mouse Hovers for Layer Content\"> Mouse Hovers for Layer Content</a></li></ul></div><div class=\"tp-faq-column tp-faq-popular\"><h4>Popular Solutions</h4><ul class=\"tp-faq-popular-content ready\"><li><a href=\"https://www.themepunch.com/faq/after-updating-make-sure-to-clear-all-caches/\" target=\"_blank\" title=\"After updating â Make sure to clear all caches\">After updating â Make sure to clear all caches</a></li><li><a href=\"https://www.themepunch.com/faq/purchase-code-registration-faqs/\" target=\"_blank\" title=\"Purchase Code Registration FAQâs\">Purchase Code Registration FAQâs</a></li><li><a href=\"https://www.themepunch.com/faq/ideal-image-size/\" target=\"_blank\" title=\"Ideal Image Size\">Ideal Image Size</a></li><li><a href=\"https://www.themepunch.com/faq/add-links-to-slides-and-layers/\" target=\"_blank\" title=\"How to Hyperlink Slides and Layers\">How to Hyperlink Slides and Layers</a></li><li><a href=\"https://www.themepunch.com/faq/where-to-find-the-purchase-code/\" target=\"_blank\" title=\"Where to find the Purchase Code\">Where to find the Purchase Code</a></li></ul></div><div style=\"clear: both\"></div><p><a class=\"button button-primary\" href=\"https://themepunch.com/support-center\"><strong>See All Faq\'s</strong></a></p></div>\";}s:3:\"url\";s:33:\"https://www.sliderrevolution.com/\";s:8:\"external\";i:1;}}`,
-		t: "stdClass",
-		v: ``,
+		s: `O:8:\"stdClass\":3:{s:7:\"checked\";i:1636591615;s:5:\"basic\";O:8:\"stdClass\":7:{s:4:\"slug\";s:9:\"revslider\";s:7:\"version\";s:5:\"6.5.9\";s:7:\"package\";s:102:\"http://updates.themepunch-ext-a.tools/revslider/download.php?code=06db9573-b0ac-49e6-ac70-c2f21893446e\";s:6:\"tested\";s:5:\"5.8.1\";s:5:\"icons\";a:1:{s:2:\"1x\";s:62:\"//updates.themepunch-ext-a.tools/revslider/logo.png?rev=6.2.23\";}s:3:\"url\";s:33:\"https://www.sliderrevolution.com/\";s:11:\"new_version\";s:5:\"6.5.9\";}s:4:\"full\";O:8:\"stdClass\":19:{s:7:\"banners\";a:2:{s:3:\"low\";s:63:\"//updates.themepunch-ext-a.tools/revslider/banner.png?rev=6.5.5\";s:4:\"high\";s:63:\"//updates.themepunch-ext-a.tools/revslider/banner.png?rev=6.5.5\";}s:4:\"name\";s:17:\"Slider Revolution\";s:4:\"slug\";s:9:\"revslider\";s:6:\"stable\";s:5:\"4.2.0\";s:7:\"version\";s:5:\"6.5.9\";s:6:\"tested\";s:5:\"5.8.1\";s:14:\"upgrade_notice\";a:0:{}s:11:\"last_update\";s:10:\"2021-10-11\";s:12:\"last_updated\";s:10:\"2021-10-11\";s:8:\"requires\";s:3:\"3.6\";s:6:\"author\";s:51:\"<a href=\"https://www.themepunch.com\">ThemePunch</a>\";s:7:\"package\";s:102:\"http://updates.themepunch-ext-a.tools/revslider/download.php?code=06db9573-b0ac-49e6-ac70-c2f21893446e\";s:13:\"download_link\";s:102:\"http://updates.themepunch-ext-a.tools/revslider/download.php?code=06db9573-b0ac-49e6-ac70-c2f21893446e\";s:9:\"file_name\";s:13:\"revslider.zip\";s:15:\"active_installs\";i:8000100;s:8:\"homepage\";s:33:\"https://www.sliderrevolution.com/\";s:8:\"sections\";a:3:{s:11:\"description\";s:497:\"<h4>Slider Revolution WordPress Builder Plugin</h4>\r\n	<p>Slider Revolution 6 is a new way to build rich & dynamic content for your websites. With our powerful visual editor, you can create modern designs in no time, and with no coding experience required.</p><p>Create Sliders & Carousels, Hero Headers, Content Modules, Full Websites, Dynamic Solutions and Special FX with our amazing Add-Ons.</p>\r\n	<p>200+ templates are included in our online library. Cutting edge designs. Easily customized.</p>\";s:9:\"changelog\";s:151:\"<p>For Slider Revolution\'s changelog, please visit <a href=\"https://www.themepunch.com/slider-revolution/changelog/\" target=\"_blank\">this</a> site!</p>\";s:3:\"faq\";s:2190:\"<div class=\"tp-faq-content\"><div class=\"tp-faq-column tp-faq-recent\"><h4>Recent Solutions</h4><ul class=\"tp-faq-recent-content ready\"><li><a href=\"https://www.youtube.com/watch?v=sCcnw5bZqYY&amp;list=PLSCdqDWVMJPPXEuOEqYEQMAsp0vAYw52_&amp;index=2&amp;t=111s\" target=\"_blank\" title=\"Video Tutorials\">Video Tutorials</a></li><li><a href=\"https://www.themepunch.com/faq/responsive-content/\" target=\"_blank\" title=\"Responsive Content Setup\">Responsive Content Setup</a></li><li><a href=\"https://www.themepunch.com/faq/video-content-mobile/\" target=\"_blank\" title=\"Video Content &amp; Mobile Considerations\">Video Content &amp; Mobile Considerations</a></li><li><a href=\"https://www.themepunch.com/faq/how-to-change-the-timing-of-slides/\" target=\"_blank\" title=\"How to change the timing of Slides\">How to change the timing of Slides</a></li><li><a href=\"https://www.themepunch.com/faq/mouse-hovers-for-layer-content/\" target=\"_blank\" title=\"Mouse Hovers for Layer Content\"> Mouse Hovers for Layer Content</a></li></ul></div><div class=\"tp-faq-column tp-faq-popular\"><h4>Popular Solutions</h4><ul class=\"tp-faq-popular-content ready\"><li><a href=\"https://www.themepunch.com/faq/after-updating-make-sure-to-clear-all-caches/\" target=\"_blank\" title=\"After updating â Make sure to clear all caches\">After updating â Make sure to clear all caches</a></li><li><a href=\"https://www.themepunch.com/faq/purchase-code-registration-faqs/\" target=\"_blank\" title=\"Purchase Code Registration FAQâs\">Purchase Code Registration FAQâs</a></li><li><a href=\"https://www.themepunch.com/faq/ideal-image-size/\" target=\"_blank\" title=\"Ideal Image Size\">Ideal Image Size</a></li><li><a href=\"https://www.themepunch.com/faq/add-links-to-slides-and-layers/\" target=\"_blank\" title=\"How to Hyperlink Slides and Layers\">How to Hyperlink Slides and Layers</a></li><li><a href=\"https://www.themepunch.com/faq/where-to-find-the-purchase-code/\" target=\"_blank\" title=\"Where to find the Purchase Code\">Where to find the Purchase Code</a></li></ul></div><div style=\"clear: both\"></div><p><a class=\"button button-primary\" href=\"https://themepunch.com/support-center\"><strong>See All Faq\'s</strong></a></p></div>\";}s:3:\"url\";s:33:\"https://www.sliderrevolution.com/\";s:8:\"external\";i:1;}}`,
+		t:  "array",
+		i:  true,
+		cr: false,
 	},
-	//==========^^^^==FAILING==^^^^==========
-
-	// ==========vvvv==PASSING==vvvv==========
 	{
-		n: "Escaped Embedded Slash N",
+		n: "Embedded carriage return as a single character",
 		f: phpcereal.StringTypeFlag,
 		e: true,
-		s: `s:5:\"Test\n\";`,
+		s: `s:1:\"` + string('\n') + `\";`,
 		t: "string",
-		v: `\"Test\n\"`, // Legend: ~private, ^protected
+		v: `\"` + string('\n') + `\"`,
+	},
+	{
+		n: "Non-ascii chars in string",
+		f: phpcereal.StringTypeFlag,
+		e: false,
+		s: `s:14:"Foo â Bar";`,
+		t: "string",
+		v: `"Foo â Bar"`,
+	},
+	{
+		n: "Non-ascii chars in array element",
+		f: phpcereal.ArrayTypeFlag,
+		e: false,
+		s: `a:1:{s:3:"faq";s:218:"<a href="https://www.themepunch.com/faq/after-updating-make-sure-to-clear-all-caches/" target="_blank" title="After updating â Make sure to clear all caches">After updating â Make sure to clear all caches</a>";}`,
+		t: "array",
+		v: `["faq"=>"<a href="https://www.themepunch.com/faq/after-updating-make-sure-to-clear-all-caches/" target="_blank" title="After updating â Make sure to clear all caches">After updating â Make sure to clear all caches</a>"]`,
+	},
+	{
+		n: "String with embedded and unescaped control characters",
+		f: phpcereal.StringTypeFlag,
+		e: false,
+		s: `s:11:"x` + string('\n') + string('\t') + `<p>x</p>";`,
+		t: "string",
+		v: `"x` + string('\n') + string('\t') + `<p>x</p>"`,
+	},
+	{
+		n: "Enquoted string with embedded quotes",
+		f: phpcereal.StringTypeFlag,
+		e: true,
+		s: `s:14:\"<a x=\"y\">z</a>\";`,
+		t: "string",
+		v: `\"<a x=\"y\">z</a>\"`,
 	},
 	{
 		n: "Rewrite Rules",
@@ -265,14 +360,6 @@ var testdata = []TestData{
 		s: `a:1:{i:0;s:0:\"\";}`,
 		v: `[0=>\"\"]`,
 	},
-	//{
-	//	n: "EmptyStringProperty",
-	//	f: phpcereal.ObjectTypeFlag,
-	//	t: "stdClass",
-	//	e: true,
-	//	s: `O:8:\"stdClass\":1:{s:3:\"foo\";s:0:\"\";}`,
-	//	v: `stdClass{foo:\"\"}`,
-	//},
 	{
 		n: "Short Custom Object",
 		f: phpcereal.CustomObjectTypeFlag,
@@ -280,27 +367,6 @@ var testdata = []TestData{
 		s: `C:7:"Student":27:{a:1:{s:4:"name";s:3:"Bob";}}`,
 		v: `Student["name"=>"Bob"]`,
 	},
-	//{
-	//	n: "Escaped Custom Object",
-	//	f: phpcereal.CustomObjectTypeFlag,
-	//	t: "WPSEO_Sitemap_Cache_Data",
-	//	e: true,
-	//	s: `C:24:\"WPSEO_Sitemap_Cache_Data\":583:{` +
-	//		`a:2:{s:6:\"status\";s:2:\"ok\";s:3:\"xml\";s:536:\"<urlset xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ` +
-	//		`xmlns:image=\"http://www.google.com/schemas/sitemap-image/1.1\" xsi:schemaLocation=\"http://www.sitemaps.org/schemas/sitemap/0.9 ` +
-	//		`http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd http://www.google.com/schemas/sitemap-image/1.1 ` +
-	//		`http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd\" xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n	<url>` +
-	//		`\n		<loc>https://www.chemetal.com/category/news/</loc>\n		<lastmod>2021-09-28T23:11:41+00:00</lastmod>\n	</url>\n</urlset>\";}` +
-	//		`}`,
-	//	v: `WPSEO_Sitemap_Cache_Data[` +
-	//		`\"status\"=>\"ok\",` +
-	//		`\"xml\"=>\"<urlset xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:image=\"http://www.google.com/schemas/sitemap-image/1.1\" ` +
-	//		`xsi:schemaLocation=\"http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd ` +
-	//		`http://www.google.com/schemas/sitemap-image/1.1 http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd\" ` +
-	//		`xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n	<url>\n		<loc>https://www.chemetal.com/category/news/</loc>\n		` +
-	//		`<lastmod>2021-09-28T23:11:41+00:00</lastmod>\n	</url>\n</urlset>\"` +
-	//		`]`,
-	//},
 	{
 		n: "Custom Object",
 		f: phpcereal.CustomObjectTypeFlag,
@@ -374,6 +440,17 @@ var testdata = []TestData{
 		v: "123",
 		t: "int",
 	},
+	{
+		n: "Escaped Embedded Slash N",
+		f: phpcereal.StringTypeFlag,
+		e: true,
+		s: `s:5:\"Test\n\";`,
+		t: "string",
+		v: `\"Test\n\"`, // Legend: ~private, ^protected
+	},
+	// ==========vvvv==PASSING==vvvv==========
+
+	//==========^^^^==FAILING==^^^^==========
 }
 
 func TestParsing(t *testing.T) {
@@ -385,7 +462,10 @@ func TestParsing(t *testing.T) {
 				t.Errorf("failed to validate: %s", test.s)
 			}
 			sp := phpcereal.NewParser(test.s)
-			sp.Escaped = test.e
+			sp.SetOpts(phpcereal.CerealOpts{
+				Escaped: test.e,
+				CountCR: test.cr,
+			})
 			root, err := sp.Parse()
 			if err != nil {
 				t.Error(err.Error())
@@ -394,7 +474,11 @@ func TestParsing(t *testing.T) {
 			s = root.Serialized()
 			assert.Equal(t, test.s, s)
 			if assert.NotEmpty(t, s) {
-				assert.Equal(t, test.f, phpcereal.TypeFlag(s[0]))
+				assert.Equal(t, test.f, phpcereal.TypeFlag(s[0]),
+					"Type Flag not as expected: %q <> %q",
+					test.f,
+					phpcereal.TypeFlag(s[0]),
+				)
 			} else {
 				return
 			}
@@ -402,6 +486,9 @@ func TestParsing(t *testing.T) {
 				if sr, ok := root.(phpcereal.StringReplacer); ok {
 					sr.ReplaceString(test.r[0], test.r[1], -1)
 				}
+			}
+			if test.i {
+				return
 			}
 			rt := root.GetType()
 			if assert.Equal(t, phpcereal.PHPType(test.t), rt) {

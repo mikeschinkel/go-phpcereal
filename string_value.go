@@ -11,7 +11,7 @@ var _ TypeFlagSetter = (*StringValue)(nil)
 var _ StringReplacer = (*StringValue)(nil)
 
 type StringValue struct {
-	escaped      bool
+	opts         CerealOpts
 	TypeFlag     TypeFlag
 	Value        string
 	LengthBytes  []byte
@@ -52,18 +52,34 @@ func (v StringValue) GetTypeFlag() TypeFlag {
 	return v.TypeFlag
 }
 
+func (v StringValue) GetOpts() CerealOpts {
+	return v.opts
+}
+
 func (v StringValue) GetEscaped() bool {
-	return v.escaped
+	return v.opts.Escaped
+}
+
+func (v StringValue) GetCountCR() bool {
+	return v.opts.CountCR
+}
+
+func (v StringValue) SetOpts(opts CerealOpts) {
+	v.opts = opts
 }
 
 func (v *StringValue) SetEscaped(e bool) {
-	v.escaped = e
+	v.opts.Escaped = e
+}
+
+func (v *StringValue) SetCountCR(cr bool) {
+	v.opts.CountCR = cr
 }
 
 func (v StringValue) String() string {
 	var pattern string
 	var value string
-	if v.escaped {
+	if v.GetEscaped() {
 		pattern = `\"%s\"`
 		value = v.getEscapedValue()
 	} else {
@@ -86,7 +102,7 @@ func (v *StringValue) getEscapedValue() string {
 func (v StringValue) Serialized() string {
 	var value string
 	var pattern string
-	if v.escaped {
+	if v.GetEscaped() {
 		value = v.getEscapedValue()
 		pattern = `%c:%d:\"%s\";`
 	} else {
@@ -95,7 +111,7 @@ func (v StringValue) Serialized() string {
 	}
 	return fmt.Sprintf(pattern,
 		byte(v.GetTypeFlag()),
-		unescapedLength(v.Value),
+		unescapedLength(v.Value, v.opts),
 		value,
 	)
 }

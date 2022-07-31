@@ -10,10 +10,19 @@ var _ StringReplacer = (*ArrayValue)(nil)
 
 type boolMappedBytes map[bool][]byte
 type ArrayValue struct {
+	opts     CerealOpts
 	escaped  bool
 	Value    Array
 	LenBytes []byte // Array Length but as []byte vs. int
 	bytes    boolMappedBytes
+}
+
+func (v *ArrayValue) GetOpts() CerealOpts {
+	return v.opts
+}
+
+func (v *ArrayValue) SetOpts(opts CerealOpts) {
+	v.opts = opts
 }
 
 func (v *ArrayValue) Length() int {
@@ -34,7 +43,7 @@ func (v ArrayValue) GetBytes() []byte {
 	if v.bytes == nil {
 		return nil
 	}
-	return v.bytes[v.escaped]
+	return v.bytes[v.GetEscaped()]
 }
 
 func (v ArrayValue) GetValue() interface{} {
@@ -50,11 +59,7 @@ func (v ArrayValue) GetTypeFlag() TypeFlag {
 }
 
 func (v ArrayValue) GetEscaped() bool {
-	return v.escaped
-}
-
-func (v *ArrayValue) SetEscaped(e bool) {
-	v.escaped = e
+	return v.opts.Escaped
 }
 
 func (v ArrayValue) String() string {
@@ -69,7 +74,7 @@ func (v *ArrayValue) Serialized() (s string) {
 			false: nil,
 		}
 	}
-	if v.bytes[v.escaped] != nil {
+	if v.bytes[v.GetEscaped()] != nil {
 		goto end
 	}
 	builder = strings.Builder{}
@@ -78,19 +83,20 @@ func (v *ArrayValue) Serialized() (s string) {
 	builderWriteInt(&builder, v.Value.Length())
 	builder.WriteString(":{")
 	for _, element := range v.Value {
-		element.Key.SetEscaped(v.escaped)
+		opts := v.GetOpts()
+		element.Key.SetOpts(opts)
 		builder.WriteString(element.Key.Serialized())
-		element.Value.SetEscaped(v.escaped)
+		element.Value.SetOpts(opts)
 		builder.WriteString(element.Value.Serialized())
 	}
 	builder.WriteByte('}')
-	v.bytes[v.escaped] = []byte(builder.String())
+	v.bytes[v.GetEscaped()] = []byte(builder.String())
 end:
-	return string(v.bytes[v.escaped])
+	return string(v.bytes[v.GetEscaped()])
 }
 
 func (v ArrayValue) SerializedLen() (length int) {
-	return unescapedLength(v.Serialized())
+	return unescapedLength(v.Serialized(), v.opts)
 }
 
 func (v ArrayValue) Parse(p *Parser) (_ CerealValue) {

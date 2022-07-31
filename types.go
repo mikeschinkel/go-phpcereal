@@ -29,3 +29,8 @@ type StringReplacer interface {
 type Chars interface {
 	string | []byte
 }
+
+type CerealOpts struct {
+	Escaped bool
+	CountCR bool // Count carriage returns
+}

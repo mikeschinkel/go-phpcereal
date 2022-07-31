@@ -5,11 +5,12 @@ type CerealValue interface {
 	GetType() PHPType
 	GetTypeFlag() TypeFlag
 	GetEscaped() bool
-	SetEscaped(bool)
 	String() string
 	Serialized() string
 	SerializedLen() int
 	Parse(*Parser) CerealValue
+	GetOpts() CerealOpts
+	SetOpts(CerealOpts)
 }
 
 func ReplaceString(cv CerealValue, find, replace string) (err error) {

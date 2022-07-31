@@ -3,7 +3,15 @@ package phpcereal
 var _ CerealValue = (*NullValue)(nil)
 
 type NullValue struct {
-	escaped bool
+	opts CerealOpts
+}
+
+func (v NullValue) GetOpts() CerealOpts {
+	return v.opts
+}
+
+func (v NullValue) SetOpts(opts CerealOpts) {
+	v.opts = opts
 }
 
 func (v NullValue) GetValue() interface{} {
@@ -19,12 +27,13 @@ func (v NullValue) GetTypeFlag() TypeFlag {
 }
 
 func (v NullValue) GetEscaped() bool {
-	return v.escaped
+	return v.opts.Escaped
 }
 
 func (v *NullValue) SetEscaped(e bool) {
-	v.escaped = e
+	v.opts.Escaped = e
 }
+
 func (v NullValue) String() string {
 	return "NULL"
 }

@@ -8,8 +8,17 @@ import (
 var _ CerealValue = (*IntValue)(nil)
 
 type IntValue struct {
+	opts    CerealOpts
 	escaped bool
 	Value   int
+}
+
+func (v *IntValue) GetOpts() CerealOpts {
+	return v.opts
+}
+
+func (v *IntValue) SetOpts(opts CerealOpts) {
+	v.opts = opts
 }
 
 func (v IntValue) GetEscaped() bool {

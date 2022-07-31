@@ -6,16 +6,21 @@ import (
 )
 
 func IsCereal[C Chars](chars C) (is bool) {
-	is, _ = _IsCereal(chars, false)
+	is, _ = _IsCereal(chars, CerealOpts{})
+	return is
+}
+
+func IsCerealWithOpts[C Chars](chars C, opts CerealOpts) (is bool) {
+	is, _ = _IsCereal(chars, opts)
 	return is
 }
 
 func IsEscapedCereal[C Chars](chars C) (is bool) {
-	is, _ = _IsCereal(chars, true)
+	is, _ = _IsCereal(chars, CerealOpts{Escaped: true})
 	return is
 }
 
-func _IsCereal[C Chars](c C, escaped bool) (is bool, n int) {
+func _IsCereal[C Chars](c C, opts CerealOpts) (is bool, n int) {
 	var b []byte
 	var ok bool
 	var p string
@@ -42,7 +47,7 @@ func _IsCereal[C Chars](c C, escaped bool) (is bool, n int) {
 		is = true
 		goto end
 	}
-	is, n = isCereal(b[2:], []byte(p), escaped)
+	is, n = isCereal(b[2:], []byte(p), opts)
 end:
 	return is, n
 }
@@ -69,7 +74,7 @@ var patterns = map[TypeFlag]string{
 	VarRefTypeFlag:       "",
 }
 
-func isCereal(buf, pat []byte, escaped bool) (is bool, bytes int) {
+func isCereal(buf, pat []byte, opts CerealOpts) (is bool, bytes int) {
 	var index, length, pos, start, n int
 	var c byte
 	start = pos
@@ -81,7 +86,7 @@ func isCereal(buf, pat []byte, escaped bool) (is bool, bytes int) {
 		switch c {
 
 		case '$': // Double-quoted string
-			if escaped {
+			if opts.Escaped {
 				if !isBackSlash(buf[pos]) {
 					goto end
 				} else {
@@ -97,8 +102,13 @@ func isCereal(buf, pat []byte, escaped bool) (is bool, bytes int) {
 			}
 			for i := 0; i < length; i++ {
 				if isBackSlash(buf[pos]) {
-					pos += 2
-					continue
+					if allConsumed(buf, pos) {
+						goto end
+					}
+					if 'r' == buf[pos+1] && !opts.CountCR {
+						pos += 2
+					}
+					pos++
 				}
 				if pos >= len(buf) {
 					break
@@ -108,7 +118,7 @@ func isCereal(buf, pat []byte, escaped bool) (is bool, bytes int) {
 					break
 				}
 			}
-			if escaped {
+			if opts.Escaped {
 				if !isBackSlash(buf[pos]) {
 					goto end
 				} else {
@@ -128,17 +138,17 @@ func isCereal(buf, pat []byte, escaped bool) (is bool, bytes int) {
 			pos++
 
 		case 'V': // CerealValue
-			is, n = _IsCereal(buf, escaped)
+			is, n = _IsCereal(buf, opts)
 			pos += n + 1
 
 		case '#': // Repeat
 			for i := 0; i < length; i++ {
-				is, n = _IsCereal(buf[pos:], escaped)
+				is, n = _IsCereal(buf[pos:], opts)
 				pos += n + 2 // 2 = 1) TypeFlag, 2)Semicolon after index
 				if !is {
 					goto end
 				}
-				is, n = _IsCereal(buf[pos:], escaped)
+				is, n = _IsCereal(buf[pos:], opts)
 				pos += n + 2 // 2 = 1) TypeFlag, 2)Semicolon after index
 				if !is {
 					goto end
@@ -232,7 +242,7 @@ func isDoubleQuote(b byte) bool {
 	return b == '"'
 }
 func allConsumed(b []byte, i int) bool {
-	return i == len(b)
+	return i >= len(b)
 }
 
 //type validateFunc func(b []byte) bool

@@ -5,8 +5,17 @@ import "fmt"
 var _ CerealValue = (*BoolValue)(nil)
 
 type BoolValue struct {
+	opts    CerealOpts
 	escaped bool
 	Value   bool
+}
+
+func (v BoolValue) GetOpts() CerealOpts {
+	return v.opts
+}
+
+func (v BoolValue) SetOpts(opts CerealOpts) {
+	v.opts = opts
 }
 
 func (v BoolValue) GetValue() interface{} {
@@ -22,11 +31,11 @@ func (v BoolValue) GetTypeFlag() TypeFlag {
 }
 
 func (v BoolValue) GetEscaped() bool {
-	return v.escaped
+	return v.opts.Escaped
 }
 
 func (v *BoolValue) SetEscaped(e bool) {
-	v.escaped = e
+	v.opts.Escaped = e
 }
 
 func (v BoolValue) String() string {
